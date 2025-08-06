@@ -1,0 +1,20 @@
+{
+  "name": "savorsync-fullstack",
+  "version": "1.0.0",
+  "description": "SavorSync - Full Stack Recipe Application",
+  "main": "index.js",
+  "scripts": {
+    "dev": "concurrently \"npm run server\" \"npm run client\"",
+    "server": "cd savorsync-api && npm run dev",
+    "client": "cd savorsync-frontend && npm run dev",
+    "build": "cd savorsync-frontend && npm run build",
+    "start": "cd savorsync-api && npm start",
+    "install-all": "npm install && cd savorsync-api && npm install && cd ../savorsync-frontend && npm install"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  },
+  "keywords": ["recipe", "cooking", "cultural", "food", "fullstack"],
+  "author": "SavorSync Team",
+  "license": "MIT"
+} 
