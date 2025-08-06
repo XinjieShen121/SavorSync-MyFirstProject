@@ -45,6 +45,21 @@ app.use('/api/community', communityRoutes);
 app.use('/api/profile-upload', profileUploadRoutes);
 app.use('/api/cultural', culturalRoutes);
 
+// Root route
+app.get('/', (req, res) => {
+  res.json({ 
+    message: 'SavorSync API is running!',
+    status: 'OK',
+    endpoints: {
+      health: '/api/health',
+      auth: '/api/auth',
+      recipes: '/api/recipes',
+      posts: '/api/posts',
+      cultural: '/api/cultural'
+    }
+  });
+});
+
 // Health check
 app.get('/api/health', (req, res) => {
   res.json({ 
@@ -68,7 +83,7 @@ app.use('*', (req, res) => {
   res.status(404).json({ error: 'Route not found' });
 });
 
-const PORT = 3001; // Back to port 3001 as requested
+const PORT = process.env.PORT || 3001; // Use Render's PORT or fallback to 3001
 
 app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
