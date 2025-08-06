@@ -3,14 +3,19 @@ import axios from 'axios';
 // Debug: Log the API base URL
 let apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001/api';
 
-// Production fallback - if deployed but no env var set
-if (window.location.hostname.includes('netlify.app') && !import.meta.env.VITE_API_BASE_URL) {
+console.log('🔧 BEFORE - Environment VITE_API_BASE_URL:', import.meta.env.VITE_API_BASE_URL);
+console.log('🔧 BEFORE - Current hostname:', window.location.hostname);
+console.log('🔧 BEFORE - apiBaseUrl:', apiBaseUrl);
+
+// FORCE production URL on Netlify deployment
+if (window.location.hostname.includes('netlify.app')) {
   apiBaseUrl = 'https://savorsync-myfirstproject.onrender.com/api';
-  console.log('🚨 Using production fallback URL');
+  console.log('🚨 FORCED production URL for Netlify deployment');
 }
 
-console.log('🔧 Environment VITE_API_BASE_URL:', import.meta.env.VITE_API_BASE_URL);
-console.log('🌐 Final Recipe API Base URL:', apiBaseUrl + '/recipes');
+console.log('🔧 AFTER - Environment VITE_API_BASE_URL:', import.meta.env.VITE_API_BASE_URL);
+console.log('🌐 FINAL Recipe API Base URL:', apiBaseUrl + '/recipes');
+console.log('🌐 FINAL Full URL for Asian cuisine would be:', apiBaseUrl + '/recipes/cuisine/Asian');
 
 const recipeAPI = axios.create({
   baseURL: apiBaseUrl + '/recipes',

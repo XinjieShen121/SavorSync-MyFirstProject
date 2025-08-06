@@ -3,15 +3,19 @@ import axios from 'axios';
 // Create axios instance with base configuration
 let API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001/api';
 
-// Production fallback - if deployed but no env var set
-if (window.location.hostname.includes('netlify.app') && !import.meta.env.VITE_API_BASE_URL) {
+console.log('🔧 BEFORE - Environment VITE_API_BASE_URL:', import.meta.env.VITE_API_BASE_URL);
+console.log('🔧 BEFORE - Current hostname:', window.location.hostname);
+console.log('🔧 BEFORE - API_BASE_URL:', API_BASE_URL);
+
+// FORCE production URL on Netlify deployment
+if (window.location.hostname.includes('netlify.app')) {
   API_BASE_URL = 'https://savorsync-myfirstproject.onrender.com/api';
-  console.log('🚨 Using production fallback URL');
+  console.log('🚨 FORCED production URL for Netlify deployment');
 }
 
 // Debug: Log the API configuration
-console.log('🔧 Environment VITE_API_BASE_URL:', import.meta.env.VITE_API_BASE_URL);
-console.log('🌐 Final API Base URL:', API_BASE_URL);
+console.log('🔧 AFTER - Environment VITE_API_BASE_URL:', import.meta.env.VITE_API_BASE_URL);
+console.log('🌐 FINAL API Base URL:', API_BASE_URL);
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -202,6 +206,10 @@ export const getRecipeById = async (id: string) => {
 };
 
 export const getRecipesByCuisine = async (cuisine: string) => {
+  console.log('🔍 getRecipesByCuisine called with cuisine:', cuisine);
+  console.log('🔍 Using API_BASE_URL:', API_BASE_URL);
+  console.log('🔍 Full URL will be:', `${API_BASE_URL}/recipes/cuisine/${cuisine}`);
+  
   const response = await fetch(`${API_BASE_URL}/recipes/cuisine/${cuisine}`);
   if (!response.ok) throw new Error('Failed to fetch cuisine recipes');
   return response.json();
