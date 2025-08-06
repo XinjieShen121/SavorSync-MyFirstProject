@@ -93,16 +93,7 @@ const HomePage: React.FC = () => {
           >
             Trending recipe
           </a>
-          <a 
-            href="#cultural" 
-            onClick={(e) => {
-              e.preventDefault();
-              setActiveSection('cultural');
-            }}
-            className={activeSection === 'cultural' ? 'active' : ''}
-          >
-            Cultural Spotlight
-          </a>
+
           <a 
             href="/community" 
             onClick={(e) => {
