@@ -1,7 +1,12 @@
 import axios from 'axios';
 
+// Debug: Log the API base URL
+const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001/api';
+console.log('🔧 Environment VITE_API_BASE_URL:', import.meta.env.VITE_API_BASE_URL);
+console.log('🌐 Final Recipe API Base URL:', apiBaseUrl + '/recipes');
+
 const recipeAPI = axios.create({
-  baseURL: (import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001/api') + '/recipes',
+  baseURL: apiBaseUrl + '/recipes',
   headers: {
     'Content-Type': 'application/json',
   },
