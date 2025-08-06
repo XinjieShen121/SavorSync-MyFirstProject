@@ -1,7 +1,14 @@
 import axios from 'axios';
 
 // Debug: Log the API base URL
-const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001/api';
+let apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001/api';
+
+// Production fallback - if deployed but no env var set
+if (window.location.hostname.includes('netlify.app') && !import.meta.env.VITE_API_BASE_URL) {
+  apiBaseUrl = 'https://savorsync-myfirstproject.onrender.com/api';
+  console.log('🚨 Using production fallback URL');
+}
+
 console.log('🔧 Environment VITE_API_BASE_URL:', import.meta.env.VITE_API_BASE_URL);
 console.log('🌐 Final Recipe API Base URL:', apiBaseUrl + '/recipes');
 
