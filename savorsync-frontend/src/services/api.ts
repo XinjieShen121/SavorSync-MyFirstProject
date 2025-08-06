@@ -43,10 +43,16 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      // Token expired or invalid
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      window.location.href = '/login';
+      // Only redirect if this is NOT a login attempt
+      if (!error.config?.url?.includes('/auth/login')) {
+        // Token expired or invalid - only redirect from non-login pages
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        // Use React Router navigation instead of hard redirect
+        if (window.location.pathname !== '/login') {
+          window.location.href = '/login';
+        }
+      }
     }
     return Promise.reject(error);
   }
