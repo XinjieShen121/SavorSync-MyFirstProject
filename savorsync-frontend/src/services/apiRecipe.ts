@@ -9,7 +9,7 @@ console.log('🔧 BEFORE - apiBaseUrl:', apiBaseUrl);
 
 // FORCE production URL on Netlify deployment
 if (window.location.hostname.includes('netlify.app')) {
-  apiBaseUrl = 'https://savorsync-myfirstproject.onrender.com/api';
+  apiBaseUrl = 'https://savorsync-myproject.onrender.com/api';
   console.log('🚨 FORCED production URL for Netlify deployment');
 }
 
