@@ -1,7 +1,84 @@
 const express = require('express');
 const router = express.Router();
 const Recipe = require('../models/Recipe');
-const { generateCulturalInsight } = require('../config/openai');
+const rateLimit = require('express-rate-limit');
+const { ObjectId } = require('mongodb');
+const { recipeDb } = require('../config/mongoose');
+const { generateCulturalInsight, answerCulturalQuestion, PRESET_QUESTIONS } = require('../config/openai');
+
+// Each AI answer costs money, so cap questions per visitor
+const askLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 20,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many questions', message: 'You have asked a lot of questions. Please try again in a few minutes.' }
+});
+
+// Preset answers are the same for everyone, so keep them for a day
+const answerCache = new Map();
+const CACHE_TTL_MS = 24 * 60 * 60 * 1000;
+const MAX_QUESTION_LENGTH = 300;
+
+const findRecipe = async (recipeId) => {
+  const recipes = recipeDb.db.collection('recipes');
+  if (ObjectId.isValid(recipeId)) {
+    const recipe = await recipes.findOne({ _id: new ObjectId(recipeId) });
+    if (recipe) return recipe;
+  }
+  return recipes.findOne({ _id: recipeId });
+};
+
+/**
+ * @route POST /api/cultural/ask
+ * @desc Ask a question about a recipe's culture: { recipeId, preset } or { recipeId, question }
+ * @access Public (rate limited)
+ */
+router.post('/ask', askLimiter, async (req, res) => {
+  try {
+    const { recipeId, preset } = req.body || {};
+    const freeText = typeof req.body?.question === 'string' ? req.body.question.trim() : '';
+
+    if (!recipeId || typeof recipeId !== 'string') {
+      return res.status(400).json({ error: 'Missing recipe', message: 'Choose a recipe first.' });
+    }
+    if (!preset && !freeText) {
+      return res.status(400).json({ error: 'Missing question', message: 'Pick a question or type your own.' });
+    }
+    if (preset && !PRESET_QUESTIONS[preset]) {
+      return res.status(400).json({ error: 'Unknown question', message: 'Pick one of the suggested questions.' });
+    }
+    if (freeText.length > MAX_QUESTION_LENGTH) {
+      return res.status(400).json({ error: 'Question too long', message: `Keep your question under ${MAX_QUESTION_LENGTH} characters.` });
+    }
+
+    const cacheKey = preset ? `${recipeId}:${preset}` : null;
+    const cached = cacheKey && answerCache.get(cacheKey);
+    if (cached && Date.now() - cached.at < CACHE_TTL_MS) {
+      return res.json({ success: true, question: PRESET_QUESTIONS[preset], answer: cached.answer, source: cached.source, cached: true });
+    }
+
+    const recipe = await findRecipe(recipeId);
+    if (!recipe) {
+      return res.status(404).json({ error: 'Recipe not found', message: 'This recipe could not be found.' });
+    }
+
+    const question = preset ? PRESET_QUESTIONS[preset] : freeText;
+    const { answer, source } = await answerCulturalQuestion(recipe, question);
+
+    if (cacheKey && source === 'ai') {
+      answerCache.set(cacheKey, { answer, source, at: Date.now() });
+    }
+
+    res.json({ success: true, question, answer, source, cached: false });
+  } catch (error) {
+    console.error('Cultural ask error:', error.message);
+    res.status(502).json({
+      error: 'AI unavailable',
+      message: "Our AI couldn't answer right now. Try again in a moment."
+    });
+  }
+});
 
 /**
  * @route GET /api/cultural/insight/:recipeId

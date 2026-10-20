@@ -22,13 +22,23 @@ const greetings = [
 ];
 
 const cuisines = [
-  { id: 'asian', name: 'Asian Heritage', regions: 'Japanese, Thai, Korean and more', image: asianFood },
-  { id: 'mediterranean', name: 'Mediterranean', regions: 'Greek, Italian, Lebanese and more', image: mediterraneanFood },
-  { id: 'latin', name: 'Latin Flavors', regions: 'Mexican, Peruvian, Cuban and more', image: latinFood },
-  { id: 'american', name: 'American Comfort', regions: 'Southern, Tex-Mex, Cajun and more', image: americanFood },
+  { id: 'asian', name: 'Asian Heritage', regions: 'Japanese, Thai, Korean', image: asianFood },
+  { id: 'mediterranean', name: 'Mediterranean', regions: 'Greek, Italian, Lebanese', image: mediterraneanFood },
+  { id: 'latin', name: 'Latin Flavors', regions: 'Mexican, Peruvian, Cuban', image: latinFood },
+  { id: 'american', name: 'American Comfort', regions: 'Southern, Tex-Mex, Cajun', image: americanFood },
 ];
 
 type LoadState = 'loading' | 'error' | 'ready';
+
+interface HomeRecipe {
+  _id: string;
+  recipe_name?: string;
+  title?: string;
+  cuisine?: string;
+  difficulty?: string;
+  image?: string;
+  image_url?: string;
+}
 
 const HomePage: React.FC = () => {
   const navigate = useNavigate();
@@ -37,7 +47,7 @@ const HomePage: React.FC = () => {
   const [showQuickStart, setShowQuickStart] = useState(false);
   const [greetingIndex, setGreetingIndex] = useState(0);
   const [query, setQuery] = useState('');
-  const [recipes, setRecipes] = useState<any[]>([]);
+  const [recipes, setRecipes] = useState<HomeRecipe[]>([]);
   const [recipesState, setRecipesState] = useState<LoadState>('loading');
 
   // Rotate the greeting, unless the visitor prefers reduced motion

@@ -4,8 +4,8 @@
   box-shadow: var(--shadow-1);
   position: sticky;
   top: 0;
-  /* Below page modals (z-index 1000+) so they still cover the nav */
-  z-index: 900;
+  /* design.md 4.9: below the cook mode overlay and dialogs */
+  z-index: var(--z-nav);
 }
 
 .site-nav__inner {
