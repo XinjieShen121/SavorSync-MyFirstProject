@@ -1,0 +1,99 @@
+:root {
+  /* Brand */
+  --color-brand-50: #FFF1E8;
+  --color-brand-100: #FFE0CC;
+  --color-brand-500: #FF6B35;
+  --color-brand-600: #E55A2B;
+  --color-brand-700: #C2410C;
+  --color-brand-800: #9A3412;
+  --color-saffron-100: #FEEBC8;
+  --color-saffron-500: #F7931E;
+  --color-saffron-700: #8F5206;
+  --color-herb-50: #EEF7F1;
+  --color-herb-700: #2F7D4F;
+
+  /* Neutrals */
+  --color-bg: #FFF8F2;
+  --color-surface: #FFFFFF;
+  --color-surface-warm: #FBE7D2;
+  --color-surface-sunken: #F6EDE4;
+  --color-border: #EADBCB;
+  --color-border-strong: #A08670;
+  --color-text: #3B2A20;
+  --color-text-secondary: #6B5547;
+  --color-text-muted: #7A6354;
+  --color-text-inverse: #FFFFFF;
+  --color-overlay: rgba(28, 18, 12, 0.55);
+
+  /* Status */
+  --color-success: #15803D;
+  --color-success-bg: #ECFDF3;
+  --color-warning: #8F5206;
+  --color-warning-bg: #FFF7E6;
+  --color-error: #B91C1C;
+  --color-error-bg: #FEF2F2;
+  --color-info: #1D4ED8;
+  --color-info-bg: #EFF6FF;
+
+  /* Type */
+  --font-display: 'Playfair Display', Georgia, serif;
+  --font-body: 'Poppins', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --text-display: 3rem;
+  --text-h1: 2.5rem;
+  --text-h2: 1.875rem;
+  --text-h3: 1.5rem;
+  --text-h4: 1.25rem;
+  --text-body-lg: 1.125rem;
+  --text-body: 1rem;
+  --text-sm: 0.875rem;
+  --text-xs: 0.75rem;
+  --text-step: 1.75rem;
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+  --weight-bold: 700;
+
+  /* Space */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+  --space-20: 80px;
+  --container-max: 1200px;
+  --container-reading: 720px;
+
+  /* Shape */
+  --radius-sm: 8px;
+  --radius-md: 16px;
+  --radius-pill: 999px;
+  --shadow-1: 0 1px 2px rgba(59, 42, 32, 0.06), 0 1px 3px rgba(59, 42, 32, 0.10);
+  --shadow-2: 0 4px 12px rgba(59, 42, 32, 0.12);
+  --shadow-3: 0 12px 32px rgba(59, 42, 32, 0.18);
+
+  /* Motion */
+  --duration-fast: 120ms;
+  --duration-base: 200ms;
+  --duration-slow: 320ms;
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+
+  /* Layers */
+  --z-nav: 100;
+  --z-dock: 200;
+  --z-overlay: 300;
+  --z-toast: 400;
+}
+
+@media (max-width: 599px) {
+  :root {
+    --text-display: 2.25rem;
+    --text-h1: 2rem;
+    --text-h2: 1.625rem;
+    --text-step: 1.5rem;
+  }
+}
