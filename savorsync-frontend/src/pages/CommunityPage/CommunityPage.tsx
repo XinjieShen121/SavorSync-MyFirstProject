@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useToast } from '../../context/ToastContext';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useUser } from '../../context/UserContext';
 import { postAPI } from '../../services/apiCommunity';
@@ -26,6 +27,7 @@ interface Post {
 }
 
 const CommunityPage: React.FC = () => {
+  const { showToast } = useToast();
   const navigate = useNavigate();
   const location = useLocation();
   const { user, isAuthenticated } = useUser();
@@ -104,7 +106,7 @@ const CommunityPage: React.FC = () => {
 
   const handleLike = async (postId: string) => {
     if (!isAuthenticated) {
-      alert('Please log in to like posts');
+      showToast('Please log in to like posts', 'info');
       return;
     }
 
@@ -144,7 +146,7 @@ const CommunityPage: React.FC = () => {
 
   const handleDelete = async (postId: string) => {
     if (!isAuthenticated) {
-      alert('Please log in to delete posts');
+      showToast('Please log in to delete posts', 'info');
       return;
     }
 
@@ -181,7 +183,7 @@ const CommunityPage: React.FC = () => {
         errorMessage = error.message;
       }
       
-      alert(`Delete failed: ${errorMessage}`);
+      showToast(`Delete failed: ${errorMessage}`, 'error');
     }
   };
 

@@ -858,7 +858,6 @@ body {
 .app {
   width: 100%;
   max-width: 1200px;
-  min-width: 1200px;
   margin: 0 auto;
   padding: 20px 0 0 0;
   display: flex;
@@ -870,10 +869,11 @@ body {
 
 /* Main Content Container */
 .main-content {
-  width: 1200px;
-  min-width: 1200px;
+  width: 100%;
+  max-width: 1200px;
   margin: 0 auto;
   padding: 20px;
+  box-sizing: border-box;
   position: relative;
   z-index: 1;
 }
@@ -2569,4 +2569,8 @@ body {
   .music-player iframe {
     height: 300px;
   }
+}
+/* Let the app fill the window so the shared nav spans the full width */
+#root {
+  width: 100%;
 }
