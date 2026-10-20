@@ -365,56 +365,13 @@
 }
 
 /* Button Styles */
-.btn {
-  padding: 0.8rem 1.5rem;
-  border: none;
-  border-radius: 12px;
-  font-family: var(--font-body);
-  font-weight: 600;
-  font-size: 1rem;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  text-decoration: none;
-}
 
-.btn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
 
-.btn-primary {
-  background: var(--color-brand-700);
-  color: var(--color-text-inverse);
-  box-shadow: var(--shadow-2);
-}
 
-.btn-primary:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-3);
-}
 
-.btn-secondary {
-  background: var(--color-text-secondary);
-  color: var(--color-text-inverse);
-}
 
-.btn-secondary:hover:not(:disabled) {
-  background: var(--color-text-secondary);
-  transform: translateY(-1px);
-}
 
-.btn-danger {
-  background: var(--color-error);
-  color: var(--color-text-inverse);
-}
 
-.btn-danger:hover:not(:disabled) {
-  background: var(--color-error);
-  transform: translateY(-1px);
-}
 
 /* Responsive Design */
 @media (max-width: 768px) {
@@ -477,8 +434,4 @@
     font-size: 1rem;
   }
   
-  .btn {
-    padding: 0.7rem 1.2rem;
-    font-size: 0.9rem;
-  }
 } 

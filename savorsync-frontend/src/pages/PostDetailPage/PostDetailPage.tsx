@@ -176,7 +176,7 @@ const PostDetailPage: React.FC = () => {
           <i className="bi bi-exclamation-triangle"></i>
           <h3>Post Not Found</h3>
           <p>{error || 'The post you are looking for does not exist.'}</p>
-          <button onClick={() => navigate('/community')} className="btn btn-primary">
+          <button onClick={() => navigate('/community')} className="btn btn--primary">
             Back to Community
           </button>
         </div>
@@ -197,7 +197,7 @@ const PostDetailPage: React.FC = () => {
             <div className="post-actions">
               <button 
                 onClick={handleEditPost}
-                className="btn btn-secondary"
+                className="btn btn--secondary"
                 disabled={deletingPost}
               >
                 <i className="bi bi-pencil"></i>
@@ -205,7 +205,7 @@ const PostDetailPage: React.FC = () => {
               </button>
               <button 
                 onClick={handleDeletePost}
-                className="btn btn-danger"
+                className="btn btn--danger"
                 disabled={deletingPost}
               >
                 <i className="bi bi-trash"></i>
@@ -288,7 +288,7 @@ const PostDetailPage: React.FC = () => {
                 </span>
                 <button 
                   type="submit" 
-                  className="btn btn-primary"
+                  className="btn btn--primary"
                   disabled={!commentContent.trim() || submittingComment}
                 >
                   {submittingComment ? 'Posting...' : 'Post Comment'}

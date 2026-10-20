@@ -1,9 +1,11 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { Dialog, Drawer, Popover, useMediaQuery } from '@mui/material';
 import { getRecipeById } from '../../services/apiRecipe';
 import { getCulturalInsight } from '../../services/apiCultural';
 import CulturalMusic from '../../components/CulturalMusic';
+import CookMode from '../../components/CookMode';
+import { savedStepKey } from '../../utils/cookMode';
 import './RecipeDetailPage.css';
 
 type Diet = 'vegetarian' | 'gluten-free' | 'low-sodium';
@@ -103,8 +105,9 @@ const RecipeDetailPage: React.FC = () => {
   const [activeDiet, setActiveDiet] = useState<Diet | null>(null);
   const [swapTarget, setSwapTarget] = useState<{ index: number; anchor: HTMLElement } | null>(null);
   const [imageFailed, setImageFailed] = useState(false);
+  const [cookStep, setCookStep] = useState<number | null>(null);
+  const [savedStep, setSavedStep] = useState<number | null>(null);
 
-  const stepsRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
     const fetchRecipe = async () => {
@@ -210,9 +213,16 @@ const RecipeDetailPage: React.FC = () => {
     }
   };
 
-  const startCooking = () => {
-    stepsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  };
+  // Offer "Resume at step N" when cook mode was left mid-recipe
+  useEffect(() => {
+    if (!recipeId || cookStep !== null) return;
+    try {
+      const saved = Number(localStorage.getItem(savedStepKey(recipeId)));
+      setSavedStep(saved > 0 ? saved : null);
+    } catch {
+      setSavedStep(null);
+    }
+  }, [recipeId, cookStep]);
 
   // Show swapped ingredients inside step text in herb green, with the original on hover
   const renderStepText = (text: string) => {
@@ -270,6 +280,12 @@ const RecipeDetailPage: React.FC = () => {
   const prep = recipe.prep_time || recipe.prepTime;
   const cook = recipe.cook_time || recipe.cookTime;
   const swapCount = Object.keys(swaps).length;
+  const cookIngredients = ingredients.map((ingredient, index) => {
+    const { name, quantity } = parseIngredient(ingredient);
+    const swap = swaps[index];
+    return swap ? { quantity, name: swap.name, swappedFrom: name } : { quantity, name };
+  });
+  const tips = instructions.map((_, index) => (index === 0 && storyIsFirstFact ? undefined : funFacts[index]));
   const target = swapTarget ? swapOptions[swapTarget.index] : [];
 
   const swapPanel = swapTarget && (
@@ -313,8 +329,8 @@ const RecipeDetailPage: React.FC = () => {
 
         {/* 2. Header */}
         <header className="recipe-header">
-          <h1 className="recipe-title">{title}</h1>
-          {recipe.subtitle && <p className="recipe-subtitle">{recipe.subtitle}</p>}
+          <h1 className="recipe-name">{title}</h1>
+          {recipe.subtitle && <p className="recipe-tagline">{recipe.subtitle}</p>}
           <ul className="recipe-facts">
             {prep && (
               <li><i className="bi bi-clock" aria-hidden="true"></i>Prep {prep}</li>
@@ -341,14 +357,14 @@ const RecipeDetailPage: React.FC = () => {
 
         {/* 3. Cultural story card (4.4) */}
         {story && (
-          <section className="story-card" aria-labelledby="story-title">
-            <p className="story-card__overline" id="story-title">
+          <section className="recipe-story" aria-labelledby="story-title">
+            <p className="recipe-story__overline" id="story-title">
               <i className="bi bi-globe2" aria-hidden="true"></i>The story
             </p>
-            <p className={`story-card__body ${storyOpen ? 'is-open' : ''}`} id="story-body">
+            <p className={`recipe-story__body ${storyOpen ? 'is-open' : ''}`} id="story-body">
               {story}
             </p>
-            <div className="story-card__actions">
+            <div className="recipe-story__actions">
               <button
                 type="button"
                 className="btn btn--ghost btn--sm"
@@ -366,7 +382,7 @@ const RecipeDetailPage: React.FC = () => {
             </div>
 
             {storyOpen && (
-              <div className="story-card__ai">
+              <div className="recipe-story__ai">
                 <button
                   type="button"
                   className="btn btn--secondary btn--sm"
@@ -378,13 +394,13 @@ const RecipeDetailPage: React.FC = () => {
                   {insightLoading ? 'Asking…' : 'Ask about this dish'}
                 </button>
                 {insight && (
-                  <div className="story-card__answer">
+                  <div className="recipe-story__answer">
                     <p>{insight}</p>
-                    <span className="story-card__ai-label">AI-generated</span>
+                    <span className="recipe-story__ai-label">AI-generated</span>
                   </div>
                 )}
                 {insightError && (
-                  <p className="story-card__error" role="alert">
+                  <p className="recipe-story__error" role="alert">
                     {insightError}{' '}
                     <button type="button" className="btn btn--ghost btn--sm" onClick={askAboutDish}>Try again</button>
                   </p>
@@ -465,18 +481,24 @@ const RecipeDetailPage: React.FC = () => {
             </ul>
           </section>
 
-          <section className="steps" aria-labelledby="steps-title" ref={stepsRef}>
+          <section className="steps" aria-labelledby="steps-title">
             <h2 id="steps-title" className="recipe-section-title">Steps</h2>
             <ol className="step-list">
               {instructions.map((step, index) => {
-                const fact = funFacts[index];
-                const showFact = fact && !(index === 0 && storyIsFirstFact);
+                const fact = tips[index];
                 return (
                   <li key={index} className="step">
-                    <span className="step__number" aria-hidden="true">{index + 1}</span>
+                    <button
+                      type="button"
+                      className="step__number"
+                      aria-label={`Cook from step ${index + 1}`}
+                      onClick={() => setCookStep(index)}
+                    >
+                      {index + 1}
+                    </button>
                     <div className="step__body">
                       <p>{renderStepText(step)}</p>
-                      {showFact && (
+                      {fact && (
                         <div className="tip-box">
                           <i className="bi bi-lightbulb" aria-hidden="true"></i>
                           <p>{fact}</p>
@@ -507,11 +529,28 @@ const RecipeDetailPage: React.FC = () => {
       </div>
 
       {/* 6. Docked Start Cooking button */}
-      <div className="cook-dock">
-        <button type="button" className="btn btn--primary btn--lg cook-dock__button" onClick={startCooking}>
-          <i className="bi bi-play-fill" aria-hidden="true"></i>Start cooking
-        </button>
-      </div>
+      {instructions.length > 0 && cookStep === null && (
+        <div className="cook-dock">
+          <button type="button" className="btn btn--primary btn--lg cook-dock__button" onClick={() => setCookStep(savedStep ?? 0)}>
+            <i className="bi bi-play-fill" aria-hidden="true"></i>
+            {savedStep !== null && savedStep < instructions.length ? `Resume at step ${savedStep + 1}` : 'Start cooking'}
+          </button>
+        </div>
+      )}
+
+      {cookStep !== null && recipeId && (
+        <CookMode
+          recipeId={recipeId}
+          title={title || 'this dish'}
+          steps={instructions}
+          tips={tips}
+          ingredients={cookIngredients}
+          checked={checked}
+          onToggleIngredient={(index) => setChecked((prev) => ({ ...prev, [index]: !prev[index] }))}
+          startStep={cookStep}
+          onClose={() => setCookStep(null)}
+        />
+      )}
 
       {/* Swap popover (desktop) or bottom sheet (mobile) */}
       {isMobile ? (
