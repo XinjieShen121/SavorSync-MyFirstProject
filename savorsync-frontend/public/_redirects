@@ -1,0 +1,5 @@
+# Send API calls to the Render backend so the site and API share one origin (no CORS).
+/api/*  https://savorsync-myproject.onrender.com/api/:splat  200
+
+# Single-page app: serve index.html for every other path so refreshes and shared links work.
+/*      /index.html  200

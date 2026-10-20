@@ -1,7 +1,8 @@
 import axios from 'axios';
+import { API_BASE_URL } from './config';
 
 const recipeAPI = axios.create({
-  baseURL: (import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001/api') + '/recipes',
+  baseURL: API_BASE_URL + '/recipes',
   headers: {
     'Content-Type': 'application/json',
   },
