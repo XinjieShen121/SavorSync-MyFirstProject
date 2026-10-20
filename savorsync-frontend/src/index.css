@@ -1,4 +1,5 @@
 @import './styles/tokens.css';
+@import './styles/components.css';
 
 /* Base reset (design.md 2.9). No dark mode in v1, so form controls stay light. */
 :root {
