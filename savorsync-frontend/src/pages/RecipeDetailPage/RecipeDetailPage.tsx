@@ -6,6 +6,7 @@ import CulturalMusic from '../../components/CulturalMusic';
 import AskAboutDish from '../../components/AskAboutDish';
 import CulturalVideo from '../../components/CulturalVideo';
 import { getYouTubeId } from '../../utils/youtube';
+import { ErrorState, LoadingState, RecipeDetailSkeleton } from '../../components/ui/States';
 import CookMode from '../../components/CookMode';
 import { savedStepKey } from '../../utils/cookMode';
 import './RecipeDetailPage.css';
@@ -44,8 +45,6 @@ interface Recipe {
   longform_video_url?: string;
 }
 
-const errorMessage = (err: unknown, fallback: string) => (err instanceof Error && err.message) || fallback;
-
 const DIET_LABELS: Record<Diet, string> = {
   vegetarian: 'Vegetarian',
   'gluten-free': 'Gluten-free',
@@ -81,7 +80,8 @@ const RecipeDetailPage: React.FC = () => {
 
   const [recipe, setRecipe] = useState<Recipe | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<'failed' | 'missing' | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
 
   const [storyOpen, setStoryOpen] = useState(false);
   const [videoOpen, setVideoOpen] = useState(false);
@@ -98,7 +98,7 @@ const RecipeDetailPage: React.FC = () => {
   useEffect(() => {
     const fetchRecipe = async () => {
       if (!recipeId) {
-        setError('No recipe ID provided');
+        setError('missing');
         setLoading(false);
         return;
       }
@@ -107,18 +107,19 @@ const RecipeDetailPage: React.FC = () => {
         setError(null);
         const data = await getRecipeById(recipeId);
         if (data._id !== recipeId) {
-          setError('Recipe ID mismatch - wrong recipe loaded');
+          setError('missing');
           return;
         }
         setRecipe(data);
       } catch (err) {
-        setError(errorMessage(err, 'Failed to fetch recipe'));
+        const status = (err as { response?: { status?: number } }).response?.status;
+        setError(status === 404 || status === 400 ? 'missing' : 'failed');
       } finally {
         setLoading(false);
       }
     };
     fetchRecipe();
-  }, [recipeId]);
+  }, [recipeId, reloadKey]);
 
   const ingredients: string[] = recipe?.ingredients || [];
   const instructions: string[] = recipe?.instructions || [];
@@ -218,17 +219,8 @@ const RecipeDetailPage: React.FC = () => {
     });
   };
 
-  if (loading) {
-    return (
-      <div className="recipe-detail-page">
-        <div className="recipe-detail-container">
-          <div className="loading">Loading recipe...</div>
-        </div>
-      </div>
-    );
-  }
-
-  if (error || !recipe) {
+  // Loading, not-found and error states (design.md 4.7)
+  if (loading || error || !recipe) {
     return (
       <div className="recipe-detail-page">
         <div className="recipe-detail-container">
@@ -236,8 +228,19 @@ const RecipeDetailPage: React.FC = () => {
             <i className="bi bi-arrow-left" aria-hidden="true"></i>
             Recipes
           </Link>
-          <h2>{error ? 'Error loading recipe' : 'Recipe not found'}</h2>
-          <p>{error || "The recipe you're looking for doesn't exist."}</p>
+          {loading ? (
+            <LoadingState label="Loading recipe">
+              <RecipeDetailSkeleton />
+            </LoadingState>
+          ) : error === 'failed' ? (
+            <ErrorState onRetry={() => setReloadKey((k) => k + 1)} exit={{ label: 'Back to recipes', to: '/all-recipes' }} />
+          ) : (
+            <ErrorState
+              title="This recipe isn't here"
+              body="It may have been removed. Browse other dishes instead."
+              primary={{ label: 'Browse recipes', to: '/all-recipes', variant: 'primary' }}
+            />
+          )}
         </div>
       </div>
     );

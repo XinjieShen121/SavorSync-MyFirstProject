@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useUser } from '../../context/UserContext';
 import { userSocialAPI, postAPI } from '../../services/apiCommunity';
 import './UserProfilePage.css';
+import { EmptyState, ErrorState, LoadingState, ProfileSkeleton } from '../../components/ui/States';
 
 interface User {
   _id: string;
@@ -37,12 +38,19 @@ const UserProfilePage: React.FC = () => {
   const [isFollowing, setIsFollowing] = useState(false);
   const [activeTab, setActiveTab] = useState<'posts' | 'followers' | 'following'>('posts');
 
+  const [failed, setFailed] = useState<'profile' | 'missing' | null>(null);
+
+  const loadProfile = async () => {
+    if (!userId) return;
+    setLoading(true);
+    setFailed(null);
+    await Promise.all([fetchUserProfile(), fetchUserPosts()]);
+    setLoading(false);
+  };
+
   useEffect(() => {
-    if (userId) {
-      fetchUserProfile();
-      fetchUserPosts();
-    }
-  }, [userId]);
+    loadProfile();
+  }, [userId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (user && currentUser) {
@@ -56,7 +64,8 @@ const UserProfilePage: React.FC = () => {
       setUser(response.user);
     } catch (error) {
       console.error('Error fetching user profile:', error);
-      navigate('/community');
+      const status = (error as { response?: { status?: number } }).response?.status;
+      setFailed(status === 404 ? 'missing' : 'profile');
     }
   };
 
@@ -66,8 +75,6 @@ const UserProfilePage: React.FC = () => {
       setPosts(response.posts);
     } catch (error) {
       console.error('Error fetching user posts:', error);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -105,24 +112,23 @@ const UserProfilePage: React.FC = () => {
 
   const isOwnProfile = currentUser && user && currentUser.id === user._id;
 
-  if (loading) {
+  // Loading, not-found and error states (design.md 4.7)
+  if (failed || loading || !user) {
     return (
       <div className="user-profile-page">
-        <div className="loading-container">
-          <div className="loading-spinner"></div>
-          <p>Loading profile...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!user) {
-    return (
-      <div className="user-profile-page">
-        <div className="error-container">
-          <h2>User not found</h2>
-          <button onClick={() => navigate('/community')}>Back to Community</button>
-        </div>
+        {failed === 'profile' ? (
+          <ErrorState onRetry={loadProfile} exit={{ label: 'Back to community', to: '/community' }} />
+        ) : failed === 'missing' || !loading ? (
+          <ErrorState
+            title="This cook isn't here"
+            body="The profile may have been removed. See what others are cooking instead."
+            primary={{ label: 'Back to community', to: '/community', variant: 'primary' }}
+          />
+        ) : (
+          <LoadingState label="Loading profile">
+            <ProfileSkeleton />
+          </LoadingState>
+        )}
       </div>
     );
   }
@@ -207,11 +213,12 @@ const UserProfilePage: React.FC = () => {
           {activeTab === 'posts' && (
             <div className="posts-section">
               {posts.length === 0 ? (
-                <div className="empty-state">
-                  <i className="bi bi-file-text"></i>
-                  <h3>No posts yet</h3>
-                  <p>{isOwnProfile ? 'Start sharing your recipes and stories!' : 'This user hasn\'t posted anything yet.'}</p>
-                </div>
+                <EmptyState
+                  icon="bi-camera"
+                  title="No posts yet"
+                  body={isOwnProfile ? 'Share your first dish.' : `${user.name} hasn't posted yet.`}
+                  action={isOwnProfile ? { label: 'Create a post', to: '/create-post', variant: 'primary' } : undefined}
+                />
               ) : (
                 <div className="posts-grid">
                   {posts.map((post) => (

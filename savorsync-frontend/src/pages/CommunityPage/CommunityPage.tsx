@@ -5,6 +5,7 @@ import { useUser } from '../../context/UserContext';
 import { postAPI } from '../../services/apiCommunity';
 import { getAllPosts, getTrendingPosts, updatePost, deletePost } from '../../services/apiPosts';
 import './CommunityPage.css';
+import { EmptyState, ErrorState, LoadingState, PostSkeleton } from '../../components/ui/States';
 
 interface Post {
   _id: string;
@@ -33,6 +34,7 @@ const CommunityPage: React.FC = () => {
   const { user, isAuthenticated } = useUser();
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
+  const [failed, setFailed] = useState(false);
   const [activeTab, setActiveTab] = useState<'feed' | 'trending' | 'my-posts'>('feed');
   const [successMessage, setSuccessMessage] = useState<string>('');
 
@@ -67,6 +69,7 @@ const CommunityPage: React.FC = () => {
   const fetchPosts = async () => {
     try {
       setLoading(true);
+      setFailed(false);
       let response;
       
       switch (activeTab) {
@@ -99,6 +102,7 @@ const CommunityPage: React.FC = () => {
     } catch (error) {
       console.error('Error fetching posts:', error);
       setPosts([]);
+      setFailed(true);
     } finally {
       setLoading(false);
     }
@@ -203,17 +207,6 @@ const CommunityPage: React.FC = () => {
     });
   };
 
-  if (loading) {
-    return (
-      <div className="community-page">
-        <div className="loading-container">
-          <div className="loading-spinner"></div>
-          <p>Loading community posts...</p>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="community-page">
       <div className="community-container">
@@ -272,21 +265,18 @@ const CommunityPage: React.FC = () => {
         {/* Posts Grid */}
         <div className="posts-container">
           {loading ? (
-            <div className="loading-state">
-              <i className="bi bi-arrow-clockwise spin"></i>
-              <p>Loading posts...</p>
-            </div>
+            <LoadingState label="Loading posts">
+              <PostSkeleton />
+            </LoadingState>
+          ) : failed ? (
+            <ErrorState onRetry={fetchPosts} exit={{ label: 'Back to recipes', to: '/all-recipes' }} />
           ) : posts.length === 0 ? (
-            <div className="empty-state">
-              <i className="bi bi-people"></i>
-              <h3>No posts yet</h3>
-              <p>Be the first to share a recipe or story!</p>
-              {isAuthenticated && (
-                <button className="create-first-post-btn" onClick={handleCreatePost}>
-                  Create Your First Post
-                </button>
-              )}
-            </div>
+            <EmptyState
+              icon="bi-chat-heart"
+              title="No posts yet"
+              body="Share what you cooked to start the conversation."
+              action={isAuthenticated ? { label: 'Create a post', onClick: handleCreatePost, variant: 'primary' } : { label: 'Sign in', to: '/login', variant: 'primary' }}
+            />
           ) : (
             <div className="posts-grid">
               {posts.map((post) => (

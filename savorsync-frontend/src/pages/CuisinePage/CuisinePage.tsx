@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { getRecipesByCuisine, getAllRecipes, getRecipesWithFilter } from '../../services/apiRecipe';
 import RecipeCard from '../../components/RecipeCard';
+import { EmptyState, ErrorState, LoadingState, RecipeGridSkeleton } from '../../components/ui/States';
 import '../../styles/shared-layout.css';
 import './CuisinePage.css';
 
@@ -105,6 +106,8 @@ const CuisinePage: React.FC = () => {
     });
   };
 
+  const [reloadKey, setReloadKey] = useState(0);
+
   // Fetch recipes when component mounts
   useEffect(() => {
     console.log('🚀 Fetching recipes for:', cuisineName);
@@ -144,7 +147,7 @@ const CuisinePage: React.FC = () => {
     };
 
     fetchRecipes();
-  }, [cuisineName, quickStartData?.time]);
+  }, [cuisineName, quickStartData?.time, reloadKey]);
 
   const handleBackToHome = () => {
     navigate('/');
@@ -240,32 +243,19 @@ const CuisinePage: React.FC = () => {
     }
   };
 
-  // Show loading state
-  if (loading) {
+  // Loading and error states (design.md 4.7)
+  if (loading || error) {
     return (
       <div className="recipe-page-container">
         <div className="recipe-page-wrapper">
-          <div className="loading">
-            <div className="loading-spinner"></div>
-            <p>Loading {cuisineName} recipes...</p>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // Show error state
-  if (error) {
-    return (
-      <div className="recipe-page-container">
-        <div className="recipe-page-wrapper">
-          <div className="error">
-            <h2>Error</h2>
-            <p>{error}</p>
-            <button className="recipe-page-back-button" onClick={handleBackToHome}>
-              ← Back to Home
-            </button>
-          </div>
+          <h1 className="recipe-page-title">{cuisineName} Cuisine</h1>
+          {error ? (
+            <ErrorState onRetry={() => setReloadKey((k) => k + 1)} exit={{ label: 'Browse all recipes', to: '/all-recipes' }} />
+          ) : (
+            <LoadingState label={`Loading ${cuisineName} recipes`}>
+              <RecipeGridSkeleton />
+            </LoadingState>
+          )}
         </div>
       </div>
     );
@@ -318,28 +308,33 @@ const CuisinePage: React.FC = () => {
         </div>
 
         {/* Recipe Cards Grid */}
-        <div className="recipe-page-grid">
-          {(() => {
-            console.log('🍽️ Current recipes in render:', Array.isArray(recipes) ? recipes.length : 'NOT ARRAY', 'recipes');
-            console.log('🔍 Active filter:', activeFilter);
-            console.log('🔍 Recipes type:', typeof recipes);
-            return null;
-          })()}
-          {!Array.isArray(recipes) || recipes.length === 0 ? (
-            <div className="no-recipes">
-              <h3>No recipes found</h3>
-              <p>Try selecting a different filter or check back later for new recipes.</p>
-            </div>
+        {!Array.isArray(recipes) || recipes.length === 0 ? (
+          allRecipes.length === 0 ? (
+            <EmptyState
+              icon="bi-globe2"
+              title={`No ${cuisineName} recipes yet`}
+              body="We're adding more dishes soon."
+              action={{ label: 'Browse all recipes', to: '/all-recipes', variant: 'secondary' }}
+            />
           ) : (
-            recipes.map((recipe) => (
+            <EmptyState
+              icon="bi-search"
+              title="No recipes match"
+              body="Try another cuisine or clear the filters."
+              action={{ label: 'Clear filters', onClick: () => handleFilterClick(countryFilters[0]), variant: 'ghost' }}
+            />
+          )
+        ) : (
+          <div className="recipe-page-grid">
+            {recipes.map((recipe) => (
               <RecipeCard
                 key={recipe._id}
                 recipe={recipe}
                 onClick={() => navigate(`/recipe/${recipe._id}`)}
               />
-            ))
-          )}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

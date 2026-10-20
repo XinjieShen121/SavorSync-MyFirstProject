@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { getAllCuisines, getRecipesWithFilter, getAllRecipes } from '../../services/apiRecipe';
 import RecipeCard from '../../components/RecipeCard';
+import { EmptyState, ErrorState, LoadingState, RecipeGridSkeleton } from '../../components/ui/States';
 import '../../styles/shared-layout.css';
 import './AllRecipesPage.css';
 
@@ -18,6 +19,7 @@ const AllRecipesPage: React.FC = () => {
   const [selectedCuisine, setSelectedCuisine] = useState<string>('all');
   const [currentPage, setCurrentPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
+  const [reloadKey, setReloadKey] = useState(0);
 
   // Fetch cuisines and initial recipes
   useEffect(() => {
@@ -49,12 +51,18 @@ const AllRecipesPage: React.FC = () => {
     };
 
     fetchData();
-  }, []);
+  }, [reloadKey]);
+
+  const retry = () => {
+    if (selectedCuisine === 'all') setReloadKey((k) => k + 1);
+    else handleCuisineFilter(selectedCuisine);
+  };
 
   // Handle cuisine filter change
   const handleCuisineFilter = async (cuisine: string) => {
     try {
       setLoading(true);
+      setError(null);
       setSelectedCuisine(cuisine);
       setCurrentPage(1);
 
@@ -131,32 +139,19 @@ const AllRecipesPage: React.FC = () => {
 
   const clearSearch = () => setSearchParams({});
 
-  // Loading state
-  if (loading && recipes.length === 0) {
+  // First load: skeleton grid or a full-page error (design.md 4.7)
+  if ((loading || error) && recipes.length === 0 && cuisines.length === 0) {
     return (
       <div className="recipe-page-container">
         <div className="recipe-page-wrapper">
-          <div className="loading">Loading recipes...</div>
-        </div>
-      </div>
-    );
-  }
-
-  // Error state
-  if (error) {
-    return (
-      <div className="recipe-page-container">
-        <div className="recipe-page-wrapper">
-          <div className="error">
-            <h2>Error loading recipes</h2>
-            <p>{error}</p>
-            <button 
-              className="recipe-page-back-button"
-              onClick={handleBackToHome}
-            >
-              ← Back to Home
-            </button>
-          </div>
+          <h1 className="recipe-page-title">All Recipes</h1>
+          {error ? (
+            <ErrorState onRetry={retry} exit={{ label: 'Back to home', to: '/' }} />
+          ) : (
+            <LoadingState label="Loading recipes">
+              <RecipeGridSkeleton />
+            </LoadingState>
+          )}
         </div>
       </div>
     );
@@ -207,7 +202,30 @@ const AllRecipesPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Recipe Grid */}
+        {/* Recipe Grid, or the loading / error / empty state for the current filter */}
+        {loading ? (
+          <LoadingState label="Loading recipes">
+            <RecipeGridSkeleton />
+          </LoadingState>
+        ) : error ? (
+          <ErrorState onRetry={retry} exit={{ label: 'Back to home', to: '/' }} />
+        ) : visibleRecipes.length === 0 ? (
+          query ? (
+            <EmptyState
+              icon="bi-search"
+              title={`Nothing found for "${query}"`}
+              body="Check the spelling or try a dish name."
+              action={{ label: 'Clear search', onClick: clearSearch, variant: 'ghost' }}
+            />
+          ) : (
+            <EmptyState
+              icon="bi-search"
+              title="No recipes match"
+              body="Try another cuisine or clear the filters."
+              action={{ label: 'Clear filters', onClick: () => handleCuisineFilter('all'), variant: 'ghost' }}
+            />
+          )
+        ) : (
         <div className="recipe-page-grid">
           {visibleRecipes.map((recipe) => (
             <RecipeCard
@@ -217,6 +235,7 @@ const AllRecipesPage: React.FC = () => {
             />
           ))}
         </div>
+        )}
 
         {/* Load More Button */}
         {hasMore && (
@@ -231,18 +250,6 @@ const AllRecipesPage: React.FC = () => {
           </div>
         )}
 
-        {/* No Recipes Found */}
-        {!loading && visibleRecipes.length === 0 && (
-          <div className="no-recipes">
-            <h3>{query ? `Nothing found for "${query}"` : 'No recipes found'}</h3>
-            <p>{query ? 'Check the spelling or try a dish name.' : 'Try selecting a different cuisine or check back later for new recipes.'}</p>
-            {query && (
-              <button className="recipe-page-back-button" onClick={clearSearch}>
-                Clear search
-              </button>
-            )}
-          </div>
-        )}
       </div>
     </div>
   );
