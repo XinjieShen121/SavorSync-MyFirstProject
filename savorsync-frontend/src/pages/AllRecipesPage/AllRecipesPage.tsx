@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { getAllCuisines, getRecipesWithFilter, getAllRecipes } from '../../services/apiRecipe';
 import RecipeCard from '../../components/RecipeCard';
 import '../../styles/shared-layout.css';
@@ -9,6 +9,8 @@ import './AllRecipesPage.css';
 
 const AllRecipesPage: React.FC = () => {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const query = (searchParams.get('q') || '').trim();
   const [recipes, setRecipes] = useState<any[]>([]);
   const [cuisines, setCuisines] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
@@ -112,6 +114,23 @@ const AllRecipesPage: React.FC = () => {
     navigate(`/recipe/${recipeId}`);
   };
 
+  // Search from the home page hero (?q=): match name, cuisine, tags or ingredients
+  const visibleRecipes = query
+    ? recipes.filter((recipe) => {
+        const needle = query.toLowerCase();
+        const haystack = [
+          recipe.recipe_name,
+          recipe.title,
+          recipe.cuisine,
+          ...(Array.isArray(recipe.tags) ? recipe.tags : []),
+          ...(Array.isArray(recipe.ingredients) ? recipe.ingredients : []),
+        ];
+        return haystack.some((field) => typeof field === 'string' && field.toLowerCase().includes(needle));
+      })
+    : recipes;
+
+  const clearSearch = () => setSearchParams({});
+
   // Loading state
   if (loading && recipes.length === 0) {
     return (
@@ -153,7 +172,9 @@ const AllRecipesPage: React.FC = () => {
           </button>
           <h1 className="recipe-page-title">All Recipes</h1>
           <p className="recipe-page-subtitle">
-            Discover {recipes.length} delicious recipes from around the world
+            {query
+              ? `${visibleRecipes.length} ${visibleRecipes.length === 1 ? 'recipe matches' : 'recipes match'} "${query}"`
+              : `Discover ${recipes.length} delicious recipes from around the world`}
           </p>
         </div>
 
@@ -162,7 +183,7 @@ const AllRecipesPage: React.FC = () => {
           <div className="filters-header">
             <h3>Filter by Cuisine</h3>
             <span className="recipe-count">
-              {recipes.length} {selectedCuisine === 'all' ? 'total' : selectedCuisine} recipes
+              {visibleRecipes.length} {selectedCuisine === 'all' ? 'total' : selectedCuisine} recipes
             </span>
           </div>
           
@@ -188,7 +209,7 @@ const AllRecipesPage: React.FC = () => {
 
         {/* Recipe Grid */}
         <div className="recipe-page-grid">
-          {recipes.map((recipe) => (
+          {visibleRecipes.map((recipe) => (
             <RecipeCard
               key={recipe._id}
               recipe={recipe}
@@ -211,10 +232,15 @@ const AllRecipesPage: React.FC = () => {
         )}
 
         {/* No Recipes Found */}
-        {!loading && recipes.length === 0 && (
+        {!loading && visibleRecipes.length === 0 && (
           <div className="no-recipes">
-            <h3>No recipes found</h3>
-            <p>Try selecting a different cuisine or check back later for new recipes.</p>
+            <h3>{query ? `Nothing found for "${query}"` : 'No recipes found'}</h3>
+            <p>{query ? 'Check the spelling or try a dish name.' : 'Try selecting a different cuisine or check back later for new recipes.'}</p>
+            {query && (
+              <button className="recipe-page-back-button" onClick={clearSearch}>
+                Clear search
+              </button>
+            )}
           </div>
         )}
       </div>
