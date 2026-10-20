@@ -2,8 +2,10 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { Dialog, Drawer, Popover, useMediaQuery } from '@mui/material';
 import { getRecipeById } from '../../services/apiRecipe';
-import { getCulturalInsight } from '../../services/apiCultural';
 import CulturalMusic from '../../components/CulturalMusic';
+import AskAboutDish from '../../components/AskAboutDish';
+import CulturalVideo from '../../components/CulturalVideo';
+import { getYouTubeId } from '../../utils/youtube';
 import CookMode from '../../components/CookMode';
 import { savedStepKey } from '../../utils/cookMode';
 import './RecipeDetailPage.css';
@@ -71,19 +73,6 @@ const parseIngredient = (text: string) => {
   return { name: text, quantity: '' };
 };
 
-const toEmbedUrl = (url?: string): string => {
-  if (!url || url.includes('example')) return '';
-  if (url.includes('youtube.com/embed')) return url;
-  const id = url.includes('youtu.be/')
-    ? url.split('youtu.be/')[1]?.split('?')[0]
-    : url.includes('youtube.com/watch')
-      ? url.split('v=')[1]?.split('&')[0]
-      : url.includes('youtube.com/v/')
-        ? url.split('youtube.com/v/')[1]?.split('?')[0]
-        : '';
-  return id ? `https://www.youtube.com/embed/${id}` : '';
-};
-
 const escapeRegExp = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 const RecipeDetailPage: React.FC = () => {
@@ -96,9 +85,6 @@ const RecipeDetailPage: React.FC = () => {
 
   const [storyOpen, setStoryOpen] = useState(false);
   const [videoOpen, setVideoOpen] = useState(false);
-  const [insight, setInsight] = useState<string | null>(null);
-  const [insightLoading, setInsightLoading] = useState(false);
-  const [insightError, setInsightError] = useState<string | null>(null);
 
   const [checked, setChecked] = useState<Record<number, boolean>>({});
   const [swaps, setSwaps] = useState<Record<number, SwapOption>>({});
@@ -190,20 +176,6 @@ const RecipeDetailPage: React.FC = () => {
     });
   };
 
-  const askAboutDish = async () => {
-    if (!recipeId) return;
-    setInsightLoading(true);
-    setInsightError(null);
-    try {
-      const response = await getCulturalInsight(recipeId);
-      setInsight(response.insight);
-    } catch (err) {
-      setInsightError(errorMessage(err, "Couldn't get an answer. Try again."));
-    } finally {
-      setInsightLoading(false);
-    }
-  };
-
   const shareRecipe = async () => {
     const url = window.location.href;
     if (navigator.share) {
@@ -275,8 +247,14 @@ const RecipeDetailPage: React.FC = () => {
   const imageSrc = recipe.image_url || (recipe.image && !recipe.image.startsWith('/api/placeholder') ? recipe.image : '');
   const story: string | undefined = recipe.culturalBackground || recipe.cultural_background || funFacts[0];
   const storyIsFirstFact = !recipe.culturalBackground && !recipe.cultural_background && !!funFacts[0];
-  const shortVideo = toEmbedUrl(recipe.shortform_video_url);
-  const longVideo = toEmbedUrl(recipe.longform_video_url);
+  const hasShortVideo = !!getYouTubeId(recipe.shortform_video_url);
+  const hasLongVideo = !!getYouTubeId(recipe.longform_video_url);
+  // The short video opens from the story card; without a story card it goes in the Video section
+  const sectionVideo = hasLongVideo
+    ? { recipe_name: title, longform_video_url: recipe.longform_video_url }
+    : !story && hasShortVideo
+      ? { recipe_name: title, shortform_video_url: recipe.shortform_video_url }
+      : null;
   const prep = recipe.prep_time || recipe.prepTime;
   const cook = recipe.cook_time || recipe.cookTime;
   const swapCount = Object.keys(swaps).length;
@@ -374,7 +352,7 @@ const RecipeDetailPage: React.FC = () => {
               >
                 {storyOpen ? 'Show less' : 'Read the story'}
               </button>
-              {shortVideo && (
+              {hasShortVideo && (
                 <button type="button" className="btn btn--ghost btn--sm" onClick={() => setVideoOpen(true)}>
                   <i className="bi bi-play-circle" aria-hidden="true"></i>Watch
                 </button>
@@ -383,28 +361,7 @@ const RecipeDetailPage: React.FC = () => {
 
             {storyOpen && (
               <div className="recipe-story__ai">
-                <button
-                  type="button"
-                  className="btn btn--secondary btn--sm"
-                  onClick={askAboutDish}
-                  disabled={insightLoading}
-                  aria-busy={insightLoading}
-                >
-                  <i className="bi bi-stars" aria-hidden="true"></i>
-                  {insightLoading ? 'Asking…' : 'Ask about this dish'}
-                </button>
-                {insight && (
-                  <div className="recipe-story__answer">
-                    <p>{insight}</p>
-                    <span className="recipe-story__ai-label">AI-generated</span>
-                  </div>
-                )}
-                {insightError && (
-                  <p className="recipe-story__error" role="alert">
-                    {insightError}{' '}
-                    <button type="button" className="btn btn--ghost btn--sm" onClick={askAboutDish}>Try again</button>
-                  </p>
-                )}
+                <AskAboutDish recipe={recipe} />
               </div>
             )}
           </section>
@@ -518,12 +475,10 @@ const RecipeDetailPage: React.FC = () => {
           <CulturalMusic recipe={{ ...recipe, cuisine: recipe.cuisine || "" }} />
         </section>
 
-        {longVideo && (
+        {sectionVideo && (
           <section className="recipe-more" id="video" aria-labelledby="video-title">
             <h2 id="video-title" className="recipe-section-title">Video</h2>
-            <div className="video-frame">
-              <iframe src={longVideo} title={`${title} video`} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen />
-            </div>
+            <CulturalVideo recipe={sectionVideo} />
           </section>
         )}
       </div>
@@ -570,11 +525,9 @@ const RecipeDetailPage: React.FC = () => {
         </Popover>
       )}
 
-      {shortVideo && (
+      {hasShortVideo && (
         <Dialog open={videoOpen} onClose={() => setVideoOpen(false)} maxWidth="md" fullWidth aria-label={`${title} story video`}>
-          <div className="video-frame">
-            <iframe src={shortVideo} title={`${title} story video`} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen />
-          </div>
+          <CulturalVideo recipe={{ recipe_name: title, shortform_video_url: recipe.shortform_video_url }} autoPlay />
         </Dialog>
       )}
     </div>
