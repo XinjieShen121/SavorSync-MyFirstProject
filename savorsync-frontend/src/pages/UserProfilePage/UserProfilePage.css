@@ -1,6 +1,6 @@
 .user-profile-page {
   min-height: 100vh;
-  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  background: var(--color-surface-sunken);
   padding: 2rem;
 }
 
@@ -11,11 +11,11 @@
 
 /* Header Styles */
 .profile-header {
-  background: white;
+  background: var(--color-surface);
   border-radius: 20px;
   padding: 2rem;
   margin-bottom: 2rem;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-3);
   position: relative;
 }
 
@@ -23,8 +23,8 @@
   position: absolute;
   top: 2rem;
   left: 2rem;
-  background: linear-gradient(135deg, #FF6B35, #f7931e);
-  color: white;
+  background: var(--color-brand-700);
+  color: var(--color-text-inverse);
   border: none;
   border-radius: 25px;
   padding: 10px 20px;
@@ -32,12 +32,12 @@
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
-  font-family: 'Poppins', sans-serif;
+  font-family: var(--font-body);
 }
 
 .back-button:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(255, 107, 53, 0.4);
+  box-shadow: var(--shadow-3);
 }
 
 .profile-info {
@@ -52,8 +52,8 @@
   height: 120px;
   border-radius: 50%;
   overflow: hidden;
-  border: 4px solid #f0f0f0;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  border: 4px solid var(--color-border);
+  box-shadow: var(--shadow-2);
 }
 
 .profile-avatar img {
@@ -67,25 +67,25 @@
 }
 
 .profile-name {
-  font-family: 'Playfair Display', serif;
+  font-family: var(--font-display);
   font-size: 2.5rem;
   font-weight: 700;
-  color: #2c3e50;
+  color: var(--color-text);
   margin: 0 0 0.5rem 0;
 }
 
 .profile-bio {
-  font-family: 'Poppins', sans-serif;
+  font-family: var(--font-body);
   font-size: 1.1rem;
-  color: #666;
+  color: var(--color-text-secondary);
   margin: 0 0 0.5rem 0;
   line-height: 1.6;
 }
 
 .profile-joined {
-  font-family: 'Poppins', sans-serif;
+  font-family: var(--font-body);
   font-size: 0.9rem;
-  color: #999;
+  color: var(--color-text-muted);
   margin: 0 0 1.5rem 0;
 }
 
@@ -101,21 +101,21 @@
 
 .stat-number {
   display: block;
-  font-family: 'Playfair Display', serif;
+  font-family: var(--font-display);
   font-size: 1.5rem;
   font-weight: 700;
-  color: #2c3e50;
+  color: var(--color-text);
 }
 
 .stat-label {
-  font-family: 'Poppins', sans-serif;
+  font-family: var(--font-body);
   font-size: 0.9rem;
-  color: #666;
+  color: var(--color-text-secondary);
 }
 
 .follow-btn {
-  background: linear-gradient(135deg, #FF6B35, #f7931e);
-  color: white;
+  background: var(--color-brand-700);
+  color: var(--color-text-inverse);
   border: none;
   border-radius: 25px;
   padding: 10px 20px;
@@ -126,21 +126,21 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  font-family: 'Poppins', sans-serif;
+  font-family: var(--font-body);
 }
 
 .follow-btn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(255, 107, 53, 0.4);
+  box-shadow: var(--shadow-3);
 }
 
 .follow-btn.following {
-  background: #28a745;
+  background: var(--color-success);
 }
 
 .follow-btn.following:hover {
-  background: #218838;
-  box-shadow: 0 6px 20px rgba(40, 167, 69, 0.4);
+  background: var(--color-success);
+  box-shadow: var(--shadow-3);
 }
 
 /* Tabs Styles */
@@ -148,15 +148,15 @@
   display: flex;
   gap: 1rem;
   margin-bottom: 2rem;
-  background: white;
+  background: var(--color-surface);
   padding: 1rem;
   border-radius: 15px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-3);
 }
 
 .tab-btn {
   background: transparent;
-  border: 2px solid #e0e0e0;
+  border: 2px solid var(--color-border);
   border-radius: 25px;
   padding: 10px 20px;
   font-size: 1rem;
@@ -166,27 +166,27 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  font-family: 'Poppins', sans-serif;
-  color: #666;
+  font-family: var(--font-body);
+  color: var(--color-text-secondary);
 }
 
 .tab-btn:hover {
-  border-color: #FF6B35;
-  color: #FF6B35;
+  border-color: var(--color-brand-500);
+  color: var(--color-brand-700);
 }
 
 .tab-btn.active {
-  background: linear-gradient(135deg, #FF6B35, #f7931e);
-  border-color: #FF6B35;
-  color: white;
+  background: var(--color-brand-700);
+  border-color: var(--color-brand-500);
+  color: var(--color-text-inverse);
 }
 
 /* Content Styles */
 .profile-content {
-  background: white;
+  background: var(--color-surface);
   border-radius: 20px;
   padding: 2rem;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-3);
 }
 
 /* Posts Grid */
@@ -197,18 +197,18 @@
 }
 
 .post-card {
-  background: white;
-  border: 1px solid #e0e0e0;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
   border-radius: 16px;
   overflow: hidden;
   transition: all 0.3s ease;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-2);
   cursor: pointer;
 }
 
 .post-card:hover {
   transform: translateY(-3px);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+  box-shadow: var(--shadow-3);
 }
 
 .post-image {
@@ -240,57 +240,57 @@
 }
 
 .post-type {
-  font-family: 'Poppins', sans-serif;
+  font-family: var(--font-body);
   font-size: 0.7rem;
   font-weight: 600;
   padding: 3px 8px;
   border-radius: 15px;
-  background: #f8f9fa;
-  color: #666;
+  background: var(--color-surface-sunken);
+  color: var(--color-text-secondary);
 }
 
 .post-type.recipe {
-  background: #e8f5e8;
-  color: #28a745;
+  background: var(--color-success-bg);
+  color: var(--color-success);
 }
 
 .post-type.story {
-  background: #fff3cd;
-  color: #856404;
+  background: var(--color-warning-bg);
+  color: var(--color-warning);
 }
 
 .post-date {
-  font-family: 'Poppins', sans-serif;
+  font-family: var(--font-body);
   font-size: 0.7rem;
-  color: #999;
+  color: var(--color-text-muted);
 }
 
 .post-title {
-  font-family: 'Playfair Display', serif;
+  font-family: var(--font-display);
   font-size: 1.1rem;
   font-weight: 600;
-  color: #2c3e50;
+  color: var(--color-text);
   margin: 0 0 0.5rem 0;
   line-height: 1.4;
 }
 
 .post-excerpt {
-  font-family: 'Poppins', sans-serif;
+  font-family: var(--font-body);
   font-size: 0.8rem;
-  color: #666;
+  color: var(--color-text-secondary);
   line-height: 1.5;
   margin: 0 0 0.5rem 0;
 }
 
 .post-cuisine {
   display: inline-block;
-  font-family: 'Poppins', sans-serif;
+  font-family: var(--font-body);
   font-size: 0.7rem;
   font-weight: 600;
   padding: 3px 8px;
   border-radius: 15px;
-  background: linear-gradient(135deg, #FF6B35, #f7931e);
-  color: white;
+  background: var(--color-brand-700);
+  color: var(--color-text-inverse);
   margin-bottom: 0.5rem;
 }
 
@@ -300,9 +300,9 @@
 }
 
 .likes-count {
-  font-family: 'Poppins', sans-serif;
+  font-family: var(--font-body);
   font-size: 0.8rem;
-  color: #666;
+  color: var(--color-text-secondary);
   display: flex;
   align-items: center;
   gap: 4px;
@@ -320,14 +320,14 @@
   align-items: center;
   gap: 1rem;
   padding: 1rem;
-  background: #f8f9fa;
+  background: var(--color-surface-sunken);
   border-radius: 12px;
   cursor: pointer;
   transition: all 0.3s ease;
 }
 
 .user-card:hover {
-  background: #e9ecef;
+  background: var(--color-surface-sunken);
   transform: translateY(-2px);
 }
 
@@ -343,17 +343,17 @@
 }
 
 .user-name {
-  font-family: 'Poppins', sans-serif;
+  font-family: var(--font-body);
   font-size: 1rem;
   font-weight: 600;
-  color: #2c3e50;
+  color: var(--color-text);
   margin: 0 0 0.25rem 0;
 }
 
 .user-bio {
-  font-family: 'Poppins', sans-serif;
+  font-family: var(--font-body);
   font-size: 0.8rem;
-  color: #666;
+  color: var(--color-text-secondary);
   margin: 0;
   line-height: 1.4;
 }
@@ -362,24 +362,24 @@
 .empty-state {
   text-align: center;
   padding: 4rem 2rem;
-  color: #666;
+  color: var(--color-text-secondary);
 }
 
 .empty-state i {
   font-size: 4rem;
-  color: #ddd;
+  color: var(--color-text-muted);
   margin-bottom: 1rem;
 }
 
 .empty-state h3 {
-  font-family: 'Playfair Display', serif;
+  font-family: var(--font-display);
   font-size: 1.5rem;
-  color: #2c3e50;
+  color: var(--color-text);
   margin: 0 0 0.5rem 0;
 }
 
 .empty-state p {
-  font-family: 'Poppins', sans-serif;
+  font-family: var(--font-body);
   font-size: 1rem;
   margin: 0;
 }
@@ -391,14 +391,14 @@
   align-items: center;
   justify-content: center;
   min-height: 400px;
-  color: #666;
+  color: var(--color-text-secondary);
 }
 
 .loading-spinner {
   width: 40px;
   height: 40px;
-  border: 4px solid #f3f3f3;
-  border-top: 4px solid #FF6B35;
+  border: 4px solid var(--color-border);
+  border-top: 4px solid var(--color-brand-500);
   border-radius: 50%;
   animation: spin 1s linear infinite;
   margin-bottom: 1rem;
@@ -413,19 +413,19 @@
 .error-container {
   text-align: center;
   padding: 4rem 2rem;
-  color: #666;
+  color: var(--color-text-secondary);
 }
 
 .error-container h2 {
-  font-family: 'Playfair Display', serif;
+  font-family: var(--font-display);
   font-size: 2rem;
-  color: #2c3e50;
+  color: var(--color-text);
   margin: 0 0 2rem 0;
 }
 
 .error-container button {
-  background: linear-gradient(135deg, #FF6B35, #f7931e);
-  color: white;
+  background: var(--color-brand-700);
+  color: var(--color-text-inverse);
   border: none;
   border-radius: 25px;
   padding: 12px 24px;
@@ -433,12 +433,12 @@
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
-  font-family: 'Poppins', sans-serif;
+  font-family: var(--font-body);
 }
 
 .error-container button:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(255, 107, 53, 0.4);
+  box-shadow: var(--shadow-3);
 }
 
 /* Responsive Design */

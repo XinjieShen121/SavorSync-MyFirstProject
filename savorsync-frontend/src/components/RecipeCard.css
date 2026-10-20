@@ -1,9 +1,9 @@
 /* RecipeCard Component Styles */
 .recipe-card {
-  background: white;
+  background: var(--color-surface);
   border-radius: 16px;
   overflow: hidden;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-3);
   transition: all 0.3s ease;
   height: 100%;
   min-height: 350px; /* Fixed minimum height */
@@ -19,7 +19,7 @@
 
 .recipe-card:hover {
   transform: translateY(-4px);
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+  box-shadow: var(--shadow-3);
 }
 
 .recipe-image {
@@ -52,8 +52,8 @@
 }
 
 .cuisine-badge {
-  background: rgba(255, 156, 91, 0.9);
-  color: white;
+  background: var(--color-brand-700);
+  color: var(--color-text-inverse);
   padding: 4px 12px;
   border-radius: 20px;
   font-size: 0.75rem;
@@ -76,10 +76,10 @@
 }
 
 .recipe-title {
-  font-family: 'Playfair Display', serif;
+  font-family: var(--font-display);
   font-size: 1.25rem;
   font-weight: 700;
-  color: #333;
+  color: var(--color-text);
   margin: 0 0 4px 0;
   line-height: 1.3;
   display: -webkit-box;
@@ -91,9 +91,9 @@
 }
 
 .recipe-subtitle {
-  font-family: 'Quicksand', sans-serif;
+  font-family: var(--font-body);
   font-size: 0.9rem;
-  color: #666;
+  color: var(--color-text-secondary);
   margin: 0 0 8px 0;
   line-height: 1.4;
   display: -webkit-box;
@@ -123,10 +123,10 @@
   gap: 4px;
   padding: 5px 8px;
   border-radius: 20px;
-  font-family: 'Quicksand', sans-serif;
+  font-family: var(--font-body);
   font-size: 0.75rem;
   font-weight: 600;
-  color: white;
+  color: var(--color-text-inverse);
   white-space: nowrap;
   flex: 1;
   min-width: 0;
@@ -150,15 +150,15 @@
 
 /* Metric Pill Colors */
 .metric-time {
-  background: linear-gradient(135deg, #ff6b35, #ff8c42);
+  background: var(--color-brand-700);
 }
 
 .metric-servings {
-  background: linear-gradient(135deg, #28a745, #34ce57);
+  background: var(--color-success);
 }
 
 .metric-difficulty {
-  background: linear-gradient(135deg, #007bff, #0056b3);
+  background: var(--color-info);
 }
 
 /* Recipe Tags */
@@ -174,14 +174,14 @@
 }
 
 .recipe-tag {
-  background: rgba(255, 156, 91, 0.1);
-  color: rgb(255, 156, 91);
+  background: var(--color-brand-50);
+  color: var(--color-brand-700);
   padding: 4px 8px;
   border-radius: 12px;
   font-size: 0.7rem;
   font-weight: 500;
-  font-family: 'Quicksand', sans-serif;
-  border: 1px solid rgba(255, 156, 91, 0.2);
+  font-family: var(--font-body);
+  border: 1px solid var(--color-brand-100);
 }
 
 /* Responsive Design */

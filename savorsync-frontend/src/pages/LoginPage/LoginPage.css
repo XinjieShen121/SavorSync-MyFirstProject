@@ -1,7 +1,7 @@
 /* Login Page Styles */
 .login-page {
   min-height: 100vh;
-  background-color: #FBE7D2;
+  background-color: var(--color-surface-warm);
   position: relative;
 }
 
@@ -14,8 +14,8 @@
 }
 
 .back-button {
-  background: rgb(255, 156, 91);
-  color: white;
+  background: var(--color-brand-700);
+  color: var(--color-text-inverse);
   border: none;
   padding: 0.6rem 1.2rem;
   border-radius: 8px;
@@ -25,17 +25,17 @@
   display: inline-flex;
   align-items: center;
   gap: 0.3rem;
-  font-family: 'Quicksand', sans-serif;
+  font-family: var(--font-body);
   font-weight: 500;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-1);
   white-space: nowrap;
   flex-shrink: 0;
 }
 
 .back-button:hover {
-  background: rgb(233, 186, 151);
+  background: var(--color-surface-warm);
   transform: translateY(-1px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+  box-shadow: var(--shadow-2);
 }
 
 .signin-section {
@@ -45,15 +45,15 @@
   min-height: calc(100vh - 100px);
   padding: 1rem;
   padding-top: 2rem; /* Add more top padding to account for back button */
-  background-color: #FBE7D2;
+  background-color: var(--color-surface-warm);
   position: relative;
 }
 
 .signin-container {
-  background: white;
+  background: var(--color-surface);
   padding: 2rem;
   border-radius: 12px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-2);
   width: 100%;
   max-width: 400px;
   position: relative;
@@ -72,23 +72,23 @@
 }
 
 .form-group label {
-  font-family: 'Quicksand', sans-serif;
+  font-family: var(--font-body);
   font-weight: 600;
   font-size: 1rem;
-  color: #2c3e50;
+  color: var(--color-text);
 }
 
 .form-group input {
   padding: 0.8rem;
-  border: 1px solid #ddd;
+  border: 1px solid var(--color-border);
   border-radius: 8px;
   font-size: 1rem;
-  background: white;
+  background: var(--color-surface);
 }
 
 .signin-button {
-  background: rgb(255, 156, 91);
-  color: white;
+  background: var(--color-brand-700);
+  color: var(--color-text-inverse);
   border: none;
   padding: 1rem;
   border-radius: 8px;
@@ -99,7 +99,7 @@
 }
 
 .signin-button:hover {
-  background: rgb(233, 186, 151);
+  background: var(--color-surface-warm);
 }
 
 .social-signin {
@@ -120,15 +120,15 @@
   justify-content: center;
   gap: 0.5rem;
   padding: 0.8rem;
-  border: 1px solid #ddd;
+  border: 1px solid var(--color-border);
   border-radius: 8px;
-  background: white;
+  background: var(--color-surface);
   cursor: pointer;
   transition: all 0.3s ease;
 }
 
 .social-button:hover {
-  background: #f5f5f5;
+  background: var(--color-surface-sunken);
 }
 
 .social-button.google {
@@ -145,7 +145,7 @@
 }
 
 .signup-link button {
-  color: rgb(255, 156, 91);
+  color: var(--color-brand-700);
   text-decoration: none;
   background: none;
   border: none;
@@ -158,8 +158,8 @@
 }
 
 .error-message {
-  color: #e74c3c;
-  background: rgba(231, 76, 60, 0.1);
+  color: var(--color-error);
+  background: var(--color-error-bg);
   padding: 0.8rem;
   border-radius: 8px;
   margin-top: 0.8rem;
@@ -168,7 +168,7 @@
 }
 
 .signin-button:disabled {
-  background: #ccc;
+  background: var(--color-surface-sunken);
   cursor: not-allowed;
 }
 

@@ -3,7 +3,7 @@
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  background-color: #FBE7D2;
+  background-color: var(--color-bg);
 }
 
 /* Cultural Greetings Animation */
@@ -22,9 +22,9 @@
 
 .greeting {
   position: relative;
-  font-family: 'Playfair Display', serif;
+  font-family: var(--font-display);
   opacity: 0.6;
-  color: rgb(233, 186, 151);
+  color: var(--color-brand-800);
   font-size: 1.5rem;
   font-weight: 500;
   animation: fadeInRotate 1s ease-out forwards;
@@ -50,16 +50,16 @@
 
 /* Typography Enhancements */
 h1, h2, h3, h4, h5, h6 {
-  font-family: 'Playfair Display', serif;
+  font-family: var(--font-display);
   font-weight: 700;
   letter-spacing: -0.02em;
 }
 
 .main-heading {
-  font-family: 'Playfair Display', serif;
+  font-family: var(--font-display);
   font-size: 3.5rem;
   font-weight: 800;
-  color: rgb(233, 186, 151);
+  color: var(--color-brand-800);
   margin: 2rem 0 1rem 0;
   line-height: 1.2;
   letter-spacing: -0.03em;
@@ -71,13 +71,13 @@ h1, h2, h3, h4, h5, h6 {
   text-align: left;
   white-space: nowrap;
   padding-right: 1rem;
-  font-family: 'Quicksand', sans-serif;
+  font-family: var(--font-body);
   font-size: 2.2rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: rgb(255, 156, 91);
-  background: linear-gradient(to right, rgb(255, 156, 91) 0%, rgb(255, 156, 91) 100%);
+  color: var(--color-brand-700);
+  background: var(--color-brand-700);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -93,7 +93,7 @@ h1, h2, h3, h4, h5, h6 {
 
 .logo:hover {
   transform: scale(1.05);
-  background: linear-gradient(to right, rgb(255, 156, 91) 0%, rgb(233, 186, 151) 100%);
+  background: var(--color-brand-700);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -103,10 +103,10 @@ h1, h2, h3, h4, h5, h6 {
 .logo i {
   margin-right: 8px;
   font-size: 2.2rem;
-  color: rgb(255, 156, 91);
+  color: var(--color-brand-700);
   vertical-align: middle;
   font-weight: 700;
-  background: linear-gradient(to right, rgb(255, 156, 91) 0%, rgb(255, 156, 91) 100%);
+  background: var(--color-brand-700);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -114,7 +114,7 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .logo:hover i {
-  background: linear-gradient(to right, rgb(255, 156, 91) 0%, rgb(233, 186, 151) 100%);
+  background: var(--color-brand-700);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -136,9 +136,9 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .nav-links a {
-  font-family: 'Quicksand', sans-serif;
+  font-family: var(--font-body);
   text-decoration: none;
-  color: #333;
+  color: var(--color-text);
   font-weight: 500;
   transition: all 0.3s ease;
   position: relative;
@@ -149,7 +149,7 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .nav-links a:hover {
-  color: rgb(255, 156, 91);
+  color: var(--color-brand-700);
 }
 
 .nav-links a::after {
@@ -159,7 +159,7 @@ h1, h2, h3, h4, h5, h6 {
   left: 50%;
   width: 0;
   height: 2px;
-  background-color: rgb(255, 156, 91);
+  background-color: var(--color-brand-700);
   transition: all 0.3s ease;
   transform: translateX(-50%);
 }
@@ -193,7 +193,7 @@ h1, h2, h3, h4, h5, h6 {
   border: none;
   font-size: 1.4rem;
   cursor: pointer;
-  color: #666;
+  color: var(--color-text-secondary);
   transition: color 0.3s ease, transform 0.2s ease;
   padding: 0.5rem;
   display: flex;
@@ -202,12 +202,12 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .icon-button:hover {
-  color: rgb(233, 186, 151);
+  color: var(--color-brand-800);
   transform: scale(1.1);
 }
 
 .icon-button.active {
-  color: rgb(255, 156, 91);
+  color: var(--color-brand-700);
   transform: scale(1.1);
 }
 
@@ -232,8 +232,8 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .start-cooking-btn {
-  background: linear-gradient(135deg, rgb(255, 156, 91) 0%, rgb(233, 186, 151) 100%);
-  color: white;
+  background: var(--color-brand-700);
+  color: var(--color-text-inverse);
   border: none;
   padding: 1.2rem 2.5rem;
   border-radius: 50px;
@@ -245,12 +245,12 @@ h1, h2, h3, h4, h5, h6 {
   display: flex;
   align-items: center;
   gap: 0.8rem;
-  box-shadow: 0 4px 15px rgba(255, 156, 91, 0.3);
+  box-shadow: var(--shadow-2);
 }
 
 .start-cooking-btn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(255, 156, 91, 0.4);
+  box-shadow: var(--shadow-3);
 }
 
 .play-icon {
@@ -267,17 +267,17 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .cuisine-card {
-  background: white;
+  background: var(--color-surface);
   border-radius: 15px;
   overflow: hidden;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-2);
   cursor: pointer;
   transition: all 0.3s ease;
 }
 
 .cuisine-card:hover {
   transform: translateY(-10px);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+  box-shadow: var(--shadow-3);
 }
 
 .cuisine-card img {
@@ -289,9 +289,9 @@ h1, h2, h3, h4, h5, h6 {
 .cuisine-card h3 {
   padding: 1.5rem;
   margin: 0;
-  font-family: 'Playfair Display', serif;
+  font-family: var(--font-display);
   font-size: 1.5rem;
-  color: #333;
+  color: var(--color-text);
 }
 
 
@@ -299,8 +299,8 @@ h1, h2, h3, h4, h5, h6 {
 /* Navbar */
 .navbar {
   width: 100%;
-  background-color: white;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  background-color: var(--color-surface);
+  box-shadow: var(--shadow-2);
   position: sticky;
   top: 0;
   z-index: 100;
@@ -319,11 +319,11 @@ h1, h2, h3, h4, h5, h6 {
 
 /* Welcome Banner */
 .welcome-banner {
-  background: linear-gradient(135deg, #FF6B35, #f7931e);
-  color: white;
+  background: var(--color-brand-700);
+  color: var(--color-text-inverse);
   padding: 1rem 0;
   text-align: center;
-  box-shadow: 0 2px 10px rgba(255, 107, 53, 0.3);
+  box-shadow: var(--shadow-2);
   animation: slideDown 0.5s ease-out;
   margin-top: 2rem;
 }
@@ -341,20 +341,20 @@ h1, h2, h3, h4, h5, h6 {
 
 .welcome-content i {
   font-size: 1.5rem;
-  color: rgba(255, 255, 255, 0.9);
+  color: var(--color-text-inverse);
 }
 
 .welcome-text {
-  font-family: 'Playfair Display', serif;
+  font-family: var(--font-display);
   font-size: 1.3rem;
   font-weight: 600;
-  color: white;
+  color: var(--color-text-inverse);
 }
 
 .welcome-subtitle {
-  font-family: 'Poppins', sans-serif;
+  font-family: var(--font-body);
   font-size: 0.9rem;
-  color: rgba(255, 255, 255, 0.8);
+  color: var(--color-text-inverse);
   font-style: italic;
 }
 
@@ -446,14 +446,14 @@ h1, h2, h3, h4, h5, h6 {
   align-items: center;
   min-height: calc(100vh - 80px); /* Subtract navbar height */
   padding: 1rem;
-  background-color: #FBE7D2;
+  background-color: var(--color-surface-warm);
 }
 
 .login-container {
-  background: white;
+  background: var(--color-surface);
   border-radius: 16px;
   padding: 2.5rem;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-3);
   width: 100%;
   max-width: 400px;
   animation: slideIn 0.3s ease;
@@ -475,12 +475,12 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .login-form h2 {
-  color: #2c3e50;
+  color: var(--color-text);
   font-size: 1.75rem;
   font-weight: 700;
   margin-bottom: 2rem;
   text-align: center;
-  font-family: 'Playfair Display', serif;
+  font-family: var(--font-display);
 }
 
 .form-group {
@@ -489,53 +489,53 @@ h1, h2, h3, h4, h5, h6 {
 
 .form-group label {
   display: block;
-  color: #2c3e50;
+  color: var(--color-text);
   font-size: 0.85rem;
   font-weight: 600;
   margin-bottom: 0.5rem;
-  font-family: 'Quicksand', sans-serif;
+  font-family: var(--font-body);
 }
 
 .login-input {
   width: 100%;
   padding: 0.8rem 1rem;
-  border: 2px solid #e0e0e0;
+  border: 2px solid var(--color-border);
   border-radius: 12px;
   font-size: 1rem;
-  font-family: 'Quicksand', sans-serif;
-  background: white;
-  color: #333;
+  font-family: var(--font-body);
+  background: var(--color-surface);
+  color: var(--color-text);
   transition: all 0.3s ease;
   box-sizing: border-box;
 }
 
 .login-input:focus {
   outline: none;
-  border-color: rgb(255, 156, 91);
-  box-shadow: 0 0 0 3px rgba(255, 156, 91, 0.1);
+  border-color: var(--color-brand-500);
+  box-shadow: 0 0 0 3px var(--color-brand-100);
 }
 
 .login-input::placeholder {
-  color: #999;
+  color: var(--color-text-muted);
   font-weight: 400;
 }
 
 .login-input:disabled {
-  background: #f8f8f8;
-  color: #666;
+  background: var(--color-surface-sunken);
+  color: var(--color-text-secondary);
   cursor: not-allowed;
 }
 
 .login-button {
   width: 100%;
   padding: 0.8rem 1.5rem;
-  background: rgb(255, 156, 91);
-  color: white;
+  background: var(--color-brand-700);
+  color: var(--color-text-inverse);
   border: none;
   border-radius: 12px;
   font-size: 1rem;
   font-weight: 600;
-  font-family: 'Quicksand', sans-serif;
+  font-family: var(--font-body);
   cursor: pointer;
   transition: all 0.3s ease;
   margin-top: 0.8rem;
@@ -544,32 +544,32 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .login-button:hover:not(:disabled) {
-  background: rgb(233, 186, 151);
+  background: var(--color-surface-warm);
   transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(255, 156, 91, 0.3);
+  box-shadow: var(--shadow-3);
 }
 
 .login-button:active:not(:disabled) {
   transform: translateY(0);
-  box-shadow: 0 4px 15px rgba(255, 156, 91, 0.3);
+  box-shadow: var(--shadow-2);
 }
 
 .login-button:disabled {
-  background: #ccc;
+  background: var(--color-surface-sunken);
   cursor: not-allowed;
   transform: none;
   box-shadow: none;
 }
 
 .login-error {
-  background: rgba(231, 76, 60, 0.1);
-  color: #e74c3c;
+  background: var(--color-error-bg);
+  color: var(--color-error);
   padding: 0.7rem 1rem;
   border-radius: 8px;
   font-size: 0.8rem;
   font-weight: 500;
   margin-bottom: 1rem;
-  border: 1px solid rgba(231, 76, 60, 0.2);
+  border: 1px solid var(--color-error);
   text-align: center;
 }
 
@@ -577,7 +577,7 @@ h1, h2, h3, h4, h5, h6 {
   text-align: center;
   margin: 2rem 0;
   position: relative;
-  color: #666;
+  color: var(--color-text-secondary);
   font-size: 0.85rem;
   font-weight: 500;
 }
@@ -589,12 +589,12 @@ h1, h2, h3, h4, h5, h6 {
   left: 0;
   right: 0;
   height: 1px;
-  background: #e0e0e0;
+  background: var(--color-surface-sunken);
   z-index: 1;
 }
 
 .divider span {
-  background: white;
+  background: var(--color-surface);
   padding: 0 1rem;
   position: relative;
   z-index: 2;
@@ -609,10 +609,10 @@ h1, h2, h3, h4, h5, h6 {
 .social-button {
   flex: 1;
   padding: 0.7rem 1rem;
-  border: 2px solid #e0e0e0;
+  border: 2px solid var(--color-border);
   border-radius: 12px;
-  background: white;
-  color: #333;
+  background: var(--color-surface);
+  color: var(--color-text);
   font-size: 0.85rem;
   font-weight: 600;
   cursor: pointer;
@@ -621,12 +621,12 @@ h1, h2, h3, h4, h5, h6 {
   align-items: center;
   justify-content: center;
   gap: 0.4rem;
-  font-family: 'Quicksand', sans-serif;
+  font-family: var(--font-body);
 }
 
 .social-button:hover {
-  border-color: #ccc;
-  background: #f8f8f8;
+  border-color: var(--color-border);
+  background: var(--color-surface-sunken);
 }
 
 .google-icon {
@@ -643,25 +643,25 @@ h1, h2, h3, h4, h5, h6 {
 
 .signup-link {
   text-align: center;
-  color: #666;
+  color: var(--color-text-secondary);
   font-size: 0.85rem;
-  font-family: 'Quicksand', sans-serif;
+  font-family: var(--font-body);
 }
 
 .signup-button {
   background: none;
   border: none;
-  color: rgb(255, 156, 91);
+  color: var(--color-brand-700);
   font-weight: 600;
   cursor: pointer;
   text-decoration: underline;
   font-size: 0.85rem;
-  font-family: 'Quicksand', sans-serif;
+  font-family: var(--font-body);
   transition: color 0.3s ease;
 }
 
 .signup-button:hover {
-  color: rgb(233, 186, 151);
+  color: var(--color-brand-800);
 }
 
 /* Responsive adjustments for login page */
@@ -708,8 +708,8 @@ h1, h2, h3, h4, h5, h6 {
 
 .copyright-footer p {
   margin: 0;
-  color: rgb(233, 186, 151);
-  font-family: 'Quicksand', sans-serif;
+  color: var(--color-brand-800);
+  font-family: var(--font-body);
   font-size: 0.9rem;
   font-weight: 500;
   letter-spacing: 0.02em;
