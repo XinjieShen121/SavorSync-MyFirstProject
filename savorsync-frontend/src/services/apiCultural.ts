@@ -111,3 +111,27 @@ export const checkCulturalServiceHealth = async (): Promise<boolean> => {
 };
 
 export default culturalAPI; 
+export type CulturalQuestionPreset = 'story' | 'ingredient' | 'home' | 'occasion';
+
+export interface CulturalAnswer {
+  success: boolean;
+  question: string;
+  answer: string;
+  source: 'ai' | 'fallback';
+  cached: boolean;
+}
+
+/**
+ * Ask a question about a recipe's culture: a preset id or the visitor's own words
+ */
+export const askAboutDish = async (
+  recipeId: string,
+  ask: { preset: CulturalQuestionPreset } | { question: string }
+): Promise<CulturalAnswer> => {
+  try {
+    const response = await culturalAPI.post('/ask', { recipeId, ...ask });
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || "Our AI couldn't answer right now. Try again in a moment.");
+  }
+};

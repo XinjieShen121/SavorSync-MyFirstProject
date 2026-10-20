@@ -135,6 +135,11 @@ CLOUDINARY_CLOUD_NAME=your-cloudinary-name
 CLOUDINARY_API_KEY=your-cloudinary-key
 CLOUDINARY_API_SECRET=your-cloudinary-secret
 OPENAI_API_KEY=your-openai-api-key
+# Optional: the chat model for cultural Q&A (defaults to gpt-4o-mini)
+OPENAI_MODEL=gpt-4o-mini
+# For "Cook with music" playlists (Spotify developer dashboard, no user login needed)
+SPOTIFY_CLIENT_ID=your-spotify-client-id
+SPOTIFY_CLIENT_SECRET=your-spotify-client-secret
 NODE_ENV=development
 ```
 
