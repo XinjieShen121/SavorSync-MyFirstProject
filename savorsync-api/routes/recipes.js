@@ -148,7 +148,7 @@ router.get('/:recipeId', async (req, res) => {
 });
 
 // Update recipe video URLs
-router.put('/:recipeId/videos', async (req, res) => {
+router.put('/:recipeId/videos', authenticateToken, async (req, res) => {
   try {
     const { recipeId } = req.params;
     const { shortform_video_url, longform_video_url } = req.body;
@@ -304,7 +304,7 @@ router.post('/search', async (req, res) => {
 });
 
 // Generate recipe (placeholder for future AI integration)
-router.post('/generate', async (req, res) => {
+router.post('/generate', authenticateToken, async (req, res) => {
   try {
     const { recipe_name, cuisine, save_to_database } = req.body;
     

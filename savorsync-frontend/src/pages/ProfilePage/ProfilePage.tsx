@@ -1,10 +1,12 @@
 import React, { useEffect, useState, useRef } from 'react';
+import { useToast } from '../../context/ToastContext';
 import { useNavigate } from 'react-router-dom';
 import { useUser } from '../../context/UserContext';
 import { uploadProfileImage, uploadProfileImageWithProgress } from '../../services/apiUpload';
 import './ProfilePage.css';
 
 const ProfilePage: React.FC = () => {
+  const { showToast } = useToast();
   const navigate = useNavigate();
   const { user, isAuthenticated, logout, loading, updateUser } = useUser();
   const [uploading, setUploading] = useState(false);
@@ -31,14 +33,14 @@ const ProfilePage: React.FC = () => {
     // Validate file type
     const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
     if (!allowedTypes.includes(file.type)) {
-      alert('Please select a valid image file (JPEG, PNG, GIF, or WebP)');
+      showToast('Please select a valid image file (JPEG, PNG, GIF, or WebP)', 'error');
       return;
     }
 
     // Validate file size (5MB max)
     const maxSize = 5 * 1024 * 1024; // 5MB
     if (file.size > maxSize) {
-      alert('File size too large. Maximum size is 5MB.');
+      showToast('File size too large. Maximum size is 5MB.', 'error');
       return;
     }
 
@@ -53,10 +55,10 @@ const ProfilePage: React.FC = () => {
       // Update user profile in database
       await updateUser({ avatar: result.imageUrl });
 
-      alert('Profile photo updated successfully!');
+      showToast('Profile photo updated successfully!', 'success');
     } catch (error: any) {
       console.error('Upload error:', error);
-      alert(error.message || 'Failed to upload profile photo');
+      showToast(error.message || 'Failed to upload profile photo', 'error');
     } finally {
       setUploading(false);
       setUploadProgress(0);

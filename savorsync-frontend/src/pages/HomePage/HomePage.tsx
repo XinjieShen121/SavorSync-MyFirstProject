@@ -18,8 +18,6 @@ const HomePage: React.FC = () => {
   
   // State variables
   const [displayText, setDisplayText] = useState("");
-  const [activeSection, setActiveSection] = useState<string | null>(null);
-  const [activeIcon, setActiveIcon] = useState<string | null>(null);
   const [showQuickStart, setShowQuickStart] = useState(false);
 
   const mainFullText = "Connecting the World One Dish at a Time";
@@ -56,107 +54,8 @@ const HomePage: React.FC = () => {
     return () => clearInterval(interval);
   }, []);
 
-  // Handle navigation to other pages
-  const handleNavigateToLogin = () => {
-    navigate('/login');
-  };
-
-  const handleNavigateToProfile = () => {
-    navigate('/profile');
-  };
-
-  // Handle user button click
-  const handleUserButtonClick = () => {
-    if (isAuthenticated) {
-      handleNavigateToProfile();
-    } else {
-      handleNavigateToLogin();
-    }
-  };
-
   return (
     <div className="app">
-      {/* Navigation */}
-      <nav className="navbar">
-        <div className="navbar-container">
-        <div className="logo" onClick={() => {
-          setActiveSection(null);
-          setActiveIcon(null);
-        }}>
-          <i className="bi bi-egg-fried"></i>
-          SavorSync
-        </div>
-        <div className="nav-links">
-          <a 
-            onClick={() => navigate('/trending-recipes')}
-            className={activeSection === 'trending' ? 'active' : ''}
-          >
-            Trending recipe
-          </a>
-          <a 
-            href="#cultural" 
-            onClick={(e) => {
-              e.preventDefault();
-              setActiveSection('cultural');
-            }}
-            className={activeSection === 'cultural' ? 'active' : ''}
-          >
-            Cultural Spotlight
-          </a>
-          <a 
-            href="/community" 
-            onClick={(e) => {
-              e.preventDefault();
-              navigate('/community');
-            }}
-          >
-            Community
-          </a>
-          <a 
-            href="/all-recipes" 
-            onClick={(e) => {
-              e.preventDefault();
-              navigate('/all-recipes');
-            }}
-          >
-            All Recipes
-          </a>
-          {!isAuthenticated && (
-            <a 
-              href="#signin" 
-              onClick={(e) => {
-                e.preventDefault();
-                handleNavigateToLogin();
-              }}
-              className={activeSection === 'signin' ? 'active' : ''}
-            >
-              Signin
-            </a>
-          )}
-        </div>
-        <div className="nav-icons">
-          <button 
-            className={`icon-button ${activeIcon === 'favorites' ? 'active' : ''}`}
-            onClick={() => setActiveIcon(activeIcon === 'favorites' ? null : 'favorites')}
-          >
-            <i className="bi bi-bookmark-heart"></i>
-          </button>
-          <button 
-            className={`icon-button ${activeIcon === 'search' ? 'active' : ''}`}
-            onClick={() => setActiveIcon(activeIcon === 'search' ? null : 'search')}
-          >
-            <i className="bi bi-search"></i>
-          </button>
-          <button 
-            className={`icon-button ${activeIcon === 'user' ? 'active' : ''}`}
-            onClick={handleUserButtonClick}
-          >
-            <i className="bi bi-person"></i>
-          </button>
-        </div>
-        </div>
-      </nav>
-
       {/* Welcome Message Banner */}
       {isAuthenticated && user && (
         <div className="welcome-banner">
@@ -186,11 +85,7 @@ const HomePage: React.FC = () => {
         <h1 className="main-heading">{displayText}</h1>
         <button 
           className="start-cooking-btn"
-          onClick={() => {
-            setActiveSection(null);
-            setActiveIcon(null);
-            handleQuickStart();
-          }}
+          onClick={handleQuickStart}
         >
           <span className="play-icon">▶</span> Start Cooking
         </button>
@@ -220,7 +115,7 @@ const HomePage: React.FC = () => {
 
       {/* Copyright Footer */}
       <footer className="copyright-footer">
-        <p>© 2023 SavorSync. All rights reserved.</p>
+        <p>© {new Date().getFullYear()} SavorSync. All rights reserved.</p>
       </footer>
 
       {/* Quick Start Modal */}
