@@ -157,6 +157,14 @@
 
 /* Diet selector (4.5) */
 .diet-selector { margin-bottom: var(--space-4); }
+.diet-selector--status {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 36px;
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+}
 .diet-selector__chips {
   display: flex;
   gap: var(--space-2);

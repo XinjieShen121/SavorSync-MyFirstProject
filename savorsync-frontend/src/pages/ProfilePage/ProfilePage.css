@@ -245,7 +245,7 @@
   box-shadow: var(--shadow-1);
 }
 
-.profile-section h3 {
+.profile-section > h3 {
   margin-bottom: 1rem;
   color: var(--color-brand-700);
   font-family: var(--font-display);

@@ -141,7 +141,12 @@ const answerCulturalQuestion = async (recipe, question) => {
   return { answer: completion.choices[0].message.content.trim(), source: 'ai' };
 };
 
+// Shared with other AI features (ingredient swaps); null when no API key is set
+const getOpenAIClient = () => openai;
+
 module.exports = {
+  getOpenAIClient,
+  CHAT_MODEL,
   generateCulturalInsight,
   answerCulturalQuestion,
   PRESET_QUESTIONS

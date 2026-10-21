@@ -6,7 +6,8 @@ import CulturalMusic from '../../components/CulturalMusic';
 import AskAboutDish from '../../components/AskAboutDish';
 import CulturalVideo from '../../components/CulturalVideo';
 import { getYouTubeId } from '../../utils/youtube';
-import { ErrorState, LoadingState, RecipeDetailSkeleton } from '../../components/ui/States';
+import { ErrorState, InlineError, InlineSpinner, LoadingState, RecipeDetailSkeleton } from '../../components/ui/States';
+import { getSubstitutions, IngredientSwaps } from '../../services/apiSubstitutions';
 import CookMode from '../../components/CookMode';
 import FavoriteButton from '../../components/FavoriteButton';
 import { savedStepKey } from '../../utils/cookMode';
@@ -52,15 +53,6 @@ const DIET_LABELS: Record<Diet, string> = {
   'low-sodium': 'Low-sodium',
 };
 
-// Fallback swaps for common ingredients, used when the recipe has no substitutions of its own
-const COMMON_SWAPS: Record<string, Partial<Record<Diet, string>>> = {
-  'chicken breast': { vegetarian: 'tofu or tempeh' },
-  'soy sauce': { 'gluten-free': 'tamari or coconut aminos', 'low-sodium': 'low-sodium soy sauce' },
-  flour: { 'gluten-free': 'almond or coconut flour' },
-  beef: { vegetarian: 'lentils or mushrooms' },
-  pork: { vegetarian: 'jackfruit or seitan' },
-};
-
 const MEASUREMENT = /^([\d/\s.]+(?:\s*(?:cup|tbsp|tsp|oz|g|kg|ml|l|pound|lb|slice|clove|bunch|handful|pinch|dash|teaspoon|tablespoon|ounce|gram|kilogram|milliliter|liter|pounds?|ounces?|grams?|kilograms?|milliliters?|liters?|cups?|tablespoons?|teaspoons?|slices?|cloves?|bunches?|handfuls?|pinches?|dashes?)\b)?)\s*(.+)$/i;
 
 const parseIngredient = (text: string) => {
@@ -94,6 +86,9 @@ const RecipeDetailPage: React.FC = () => {
   const [imageFailed, setImageFailed] = useState(false);
   const [cookStep, setCookStep] = useState<number | null>(null);
   const [savedStep, setSavedStep] = useState<number | null>(null);
+  const [suggested, setSuggested] = useState<IngredientSwaps[]>([]);
+  const [swapsState, setSwapsState] = useState<'loading' | 'error' | 'ready'>('loading');
+  const [swapsReloadKey, setSwapsReloadKey] = useState(0);
 
 
   useEffect(() => {
@@ -126,10 +121,28 @@ const RecipeDetailPage: React.FC = () => {
   const instructions: string[] = recipe?.instructions || [];
   const funFacts: string[] = recipe?.fun_facts || [];
 
-  // Swap options per ingredient: the recipe's own substitutions first, then common swaps
+  // Suggested swaps from the API (AI, or a checked table when AI is off)
+  useEffect(() => {
+    if (!recipe?._id) return;
+    let cancelled = false;
+    setSwapsState('loading');
+    getSubstitutions(recipe._id)
+      .then((result) => {
+        if (cancelled) return;
+        setSuggested(result.swaps);
+        setSwapsState('ready');
+      })
+      .catch(() => {
+        if (!cancelled) setSwapsState('error');
+      });
+    return () => { cancelled = true; };
+  }, [recipe?._id, swapsReloadKey]);
+
+  // Swap options per ingredient: the recipe's own substitutions first, then suggested swaps
   const swapOptions = useMemo(() => {
     const own = recipe?.substitutions || [];
-    return ingredients.map((ingredient) => {
+    const suggestedByIndex = new Map(suggested.map((entry) => [entry.index, entry.options]));
+    return ingredients.map((ingredient, index) => {
       const lower = ingredient.toLowerCase();
       const options: SwapOption[] = [];
       own.forEach((sub) => {
@@ -137,15 +150,13 @@ const RecipeDetailPage: React.FC = () => {
           options.push({ name: sub.substitute, reason: sub.reason, matchKey: sub.original });
         }
       });
-      Object.entries(COMMON_SWAPS).forEach(([key, byDiet]) => {
-        if (!lower.includes(key)) return;
-        (Object.entries(byDiet) as [Diet, string][]).forEach(([diet, name]) => {
-          options.push({ name, diet, matchKey: key });
-        });
+      (suggestedByIndex.get(index) || []).forEach((option) => {
+        if (options.some((o) => o.diet === option.diet || o.name.toLowerCase() === option.name.toLowerCase())) return;
+        options.push(option);
       });
       return options.slice(0, 3);
     });
-  }, [recipe]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [recipe, suggested]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const availableDiets = (Object.keys(DIET_LABELS) as Diet[]).filter((diet) =>
     swapOptions.some((options) => options.some((o) => o.diet === diet)),
@@ -377,6 +388,17 @@ const RecipeDetailPage: React.FC = () => {
           <section className="ingredients" aria-labelledby="ingredients-title">
             <h2 id="ingredients-title" className="recipe-section-title">Ingredients</h2>
 
+            {swapsState === 'loading' && (
+              <div className="diet-selector diet-selector--status">
+                <InlineSpinner label="Finding ingredient swaps" />
+                <span aria-hidden="true">Finding vegetarian, gluten-free and low-sodium swaps</span>
+              </div>
+            )}
+            {swapsState === 'error' && (
+              <div className="diet-selector diet-selector--status">
+                <InlineError message="Couldn't load ingredient swaps." onRetry={() => setSwapsReloadKey((k) => k + 1)} />
+              </div>
+            )}
             {availableDiets.length > 0 && (
               <div className="diet-selector">
                 <div className="diet-selector__chips" role="group" aria-label="Diet">
