@@ -5,6 +5,13 @@ const { ObjectId } = require('mongodb');
 const User = require('../models/User');
 
 const toObjectId = (id) => (ObjectId.isValid(id) ? new ObjectId(id) : null);
+const rateLimit = require('express-rate-limit');
+const { generateRecipe, parseRequest } = require('../config/recipeGenerator');
+
+// AI recipes visitors create stay out of the shared catalogue; they are reachable
+// by link once saved, and from the creator's own "My recipes".
+const PUBLIC_ONLY = { generated: { $ne: true } };
+const publicQuery = (query) => (Object.keys(query).length ? { $and: [query, PUBLIC_ONLY] } : PUBLIC_ONLY);
 
 const router = express.Router();
 
@@ -85,6 +92,7 @@ router.get('/', async (req, res) => {
       }
     }
     
+    query = publicQuery(query);
     const totalRecipes = await recipesCollection.countDocuments(query);
     
     // If no pagination parameters are provided, return all recipes
@@ -111,6 +119,21 @@ router.get('/', async (req, res) => {
   } catch (error) {
     console.error('Get all recipes error:', error);
     res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Recipes the signed-in user created with "Cook with what I have", newest first
+router.get('/mine', authenticateToken, async (req, res) => {
+  try {
+    const recipes = await recipeDb.db.collection('recipes')
+      .find({ generated: true, draft: false, createdBy: String(req.user._id) })
+      .sort({ savedAt: -1 })
+      .limit(100)
+      .toArray();
+    res.json({ recipes });
+  } catch (error) {
+    console.error('Get my recipes error:', error);
+    res.status(500).json({ error: "Couldn't load your recipes. Please try again." });
   }
 });
 
@@ -149,7 +172,7 @@ router.get('/:recipeId', async (req, res) => {
       query = { _id: recipeId };
     }
     
-    const recipe = await recipesCollection.findOne(query);
+    const recipe = await recipesCollection.findOne({ ...query, draft: { $ne: true } });
     
     if (!recipe) {
       return res.status(404).json({ error: 'Recipe not found' });
@@ -287,7 +310,7 @@ router.get('/cuisine/:cuisine', async (req, res) => {
     console.log(`🔍 Searching for cuisine: ${cuisine}`);
     console.log(`📋 Search query:`, JSON.stringify(searchQuery, null, 2));
     
-    const recipes = await recipesCollection.find(searchQuery).toArray();
+    const recipes = await recipesCollection.find(publicQuery(searchQuery)).toArray();
     
     console.log(`📊 Found ${recipes.length} recipes for ${cuisine}`);
     
@@ -309,14 +332,14 @@ router.post('/search', async (req, res) => {
     // Use the real MongoDB collection directly
     const recipesCollection = recipeDb.db.collection('recipes');
     
-    const recipes = await recipesCollection.find({
+    const recipes = await recipesCollection.find(publicQuery({
       $or: [
         { title: { $regex: new RegExp(query, 'i') } },
         { subtitle: { $regex: new RegExp(query, 'i') } },
         { tags: { $in: [new RegExp(query, 'i')] } },
         { cuisine: { $regex: new RegExp(query, 'i') } }
       ]
-    }).toArray();
+    })).toArray();
 
     res.json(recipes);
   } catch (error) {
@@ -325,40 +348,60 @@ router.post('/search', async (req, res) => {
   }
 });
 
-// Generate recipe (placeholder for future AI integration)
-router.post('/generate', authenticateToken, async (req, res) => {
-  try {
-    const { recipe_name, cuisine, save_to_database } = req.body;
-    
-    // For now, return a mock generated recipe
-    const mockRecipe = {
-      title: recipe_name,
-      subtitle: `Generated ${cuisine} recipe`,
-      cuisine: cuisine,
-      region: 'Generated',
-      culturalBackground: `A generated ${cuisine} recipe created just for you.`,
-      ingredients: ['Ingredient 1', 'Ingredient 2', 'Ingredient 3'],
-      instructions: ['Step 1', 'Step 2', 'Step 3'],
-      prepTime: '30 minutes',
-      cookTime: '45 minutes',
-      servings: 4,
-      difficulty: 'Medium',
-      tags: [cuisine.toLowerCase(), 'generated'],
-      image: 'https://images.unsplash.com/photo-1565299624946-b28f40a0ca4b?w=600&h=400&fit=crop'
-    };
+// Each AI recipe costs money, so cap how many one visitor can make
+const generateLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many recipes', message: "You've made a lot of recipes this hour. Please try again later." }
+});
 
-    if (save_to_database) {
-      // Use the real MongoDB collection directly
-      const recipesCollection = recipeDb.db.collection('recipes');
-      const result = await recipesCollection.insertOne(mockRecipe);
-      mockRecipe._id = result.insertedId;
-      res.json({ message: 'Recipe generated and saved', recipe: mockRecipe });
-    } else {
-      res.json({ message: 'Recipe generated', recipe: mockRecipe });
-    }
+// Cook with what I have: write a recipe from the visitor's ingredients.
+// It is stored as a draft so saving it later never trusts content from the browser.
+router.post('/generate', authenticateToken, generateLimiter, async (req, res) => {
+  try {
+    const request = parseRequest(req.body);
+    const recipe = await generateRecipe(request);
+    const draft = {
+      ...recipe,
+      generated: true,
+      draft: true,
+      createdBy: String(req.user._id),
+      createdAt: new Date(),
+      requestedIngredients: request.ingredients,
+    };
+    const result = await recipeDb.db.collection('recipes').insertOne(draft);
+    res.json({ recipe: { ...draft, _id: result.insertedId } });
   } catch (error) {
+    if (error.status) {
+      return res.status(error.status).json({ error: 'Generate failed', message: error.message });
+    }
     console.error('Generate recipe error:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    res.status(502).json({ error: 'Generate failed', message: "Couldn't create a recipe right now. Please try again." });
+  }
+});
+
+// Keep a generated draft: it then has a shareable page and shows in "My recipes"
+router.post('/generated/:id/save', authenticateToken, async (req, res) => {
+  try {
+    const objectId = toObjectId(req.params.id);
+    if (!objectId) {
+      return res.status(400).json({ error: 'Invalid recipe', message: 'That recipe link looks wrong.' });
+    }
+    const result = await recipeDb.db.collection('recipes').findOneAndUpdate(
+      { _id: objectId, generated: true, createdBy: String(req.user._id) },
+      { $set: { draft: false, savedAt: new Date() } },
+      { returnDocument: 'after' }
+    );
+    const recipe = result && result.value !== undefined ? result.value : result;
+    if (!recipe) {
+      return res.status(404).json({ error: 'Recipe not found', message: "We couldn't find that recipe." });
+    }
+    res.json({ recipe });
+  } catch (error) {
+    console.error('Save generated recipe error:', error);
+    res.status(500).json({ error: 'Save failed', message: "Couldn't save this recipe. Please try again." });
   }
 });
 

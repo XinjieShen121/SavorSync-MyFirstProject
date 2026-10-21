@@ -6,6 +6,7 @@ import './SiteNav.css';
 const links = [
   { to: '/all-recipes', label: 'Recipes' },
   { to: '/trending-recipes', label: 'Trending' },
+  { to: '/cook-with-ai', label: 'Cook with AI' },
   { to: '/community', label: 'Community' },
 ];
 

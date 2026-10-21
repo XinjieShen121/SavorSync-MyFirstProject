@@ -7,7 +7,7 @@ export interface RecipeFactsSource {
   cookTime?: string;
   total_time?: string;
   totalTime?: string;
-  servings?: number | string;
+  servings?: number | string | null;
   difficulty?: string;
   tags?: string[];
   isVegetarian?: boolean;

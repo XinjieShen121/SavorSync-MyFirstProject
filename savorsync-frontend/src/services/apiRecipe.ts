@@ -46,15 +46,6 @@ export const searchRecipes = async (query: string) => {
   return res.data;
 };
 
-export const generateRecipe = async (recipe_name: string, cuisine: string) => {
-  const res = await recipeAPI.post('/generate', {
-    recipe_name,
-    cuisine,
-    save_to_database: true,
-  });
-  return res.data;
-};
-
 // New functions for All Recipes page
 export const getAllCuisines = async () => {
   const res = await recipeAPI.get('/cuisines');

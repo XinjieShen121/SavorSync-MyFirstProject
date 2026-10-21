@@ -26,6 +26,7 @@ import UserProfilePage from "./pages/UserProfilePage/UserProfilePage";
 import CreatePostPage from "./pages/CreatePostPage/CreatePostPage";
 import PostDetailPage from "./pages/PostDetailPage/PostDetailPage";
 import CallbackPage from "./pages/CallbackPage";
+import CookWithAIPage from "./pages/CookWithAIPage/CookWithAIPage";
 
 function App() {
   // Add Bootstrap Icons in head
@@ -59,6 +60,7 @@ function App() {
             {import.meta.env.DEV && <Route path="/status" element={<StatusPage />} />}
             <Route path="/all-recipes" element={<AllRecipesPage />} />
             <Route path="/trending-recipes" element={<TrendingRecipesPage />} />
+            <Route path="/cook-with-ai" element={<CookWithAIPage />} />
             <Route path="/community" element={<CommunityPage />} />
             <Route path="/create-post" element={<CreatePostPage />} />
             <Route path="/post/:postId" element={<PostDetailPage />} />
