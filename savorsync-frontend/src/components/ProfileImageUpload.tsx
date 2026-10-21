@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { useUser } from '../context/UserContext';
 import axios from 'axios';
+import { API_BASE_URL } from '../services/config';
 import './ProfileImageUpload.css';
 
 interface ProfileImageUploadProps {
@@ -75,7 +76,7 @@ const ProfileImageUpload: React.FC<ProfileImageUploadProps> = ({
 
       // Upload to backend
       const response = await axios.post(
-        'http://localhost:3001/api/profile-upload/profile-image',
+        `${API_BASE_URL}/profile-upload/profile-image`,
         formData,
         {
           headers: {

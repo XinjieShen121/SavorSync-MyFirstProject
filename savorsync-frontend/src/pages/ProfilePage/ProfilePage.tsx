@@ -1,15 +1,43 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
+import { useToast } from '../../context/ToastContext';
 import { useNavigate } from 'react-router-dom';
 import { useUser } from '../../context/UserContext';
 import { uploadProfileImage, uploadProfileImageWithProgress } from '../../services/apiUpload';
+import { getFavoriteRecipes } from '../../services/apiFavorites';
+import RecipeCard, { RecipeCardRecipe } from '../../components/RecipeCard';
+import { EmptyState, InlineError, RecipeGridSkeleton } from '../../components/ui/States';
+import '../../styles/shared-layout.css';
 import './ProfilePage.css';
 
 const ProfilePage: React.FC = () => {
+  const { showToast } = useToast();
   const navigate = useNavigate();
   const { user, isAuthenticated, logout, loading, updateUser } = useUser();
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [favoriteRecipes, setFavoriteRecipes] = useState<RecipeCardRecipe[]>([]);
+  const [favoritesState, setFavoritesState] = useState<'loading' | 'error' | 'ready'>('loading');
+  const [favoritesError, setFavoritesError] = useState('');
+
+  const loadFavorites = useCallback(async () => {
+    setFavoritesState('loading');
+    try {
+      setFavoriteRecipes(await getFavoriteRecipes());
+      setFavoritesState('ready');
+    } catch (err) {
+      setFavoritesError((err as Error).message);
+      setFavoritesState('error');
+    }
+  }, []);
+
+  useEffect(() => {
+    if (isAuthenticated) loadFavorites();
+  }, [isAuthenticated, loadFavorites]);
+
+  // Un-hearting a card here removes it from the grid right away
+  const favoriteIds = user?.favorites || [];
+  const visibleFavorites = favoriteRecipes.filter(recipe => favoriteIds.includes(recipe._id));
 
   const handleBackToHome = () => {
     navigate('/');
@@ -31,14 +59,14 @@ const ProfilePage: React.FC = () => {
     // Validate file type
     const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
     if (!allowedTypes.includes(file.type)) {
-      alert('Please select a valid image file (JPEG, PNG, GIF, or WebP)');
+      showToast('Please select a valid image file (JPEG, PNG, GIF, or WebP)', 'error');
       return;
     }
 
     // Validate file size (5MB max)
     const maxSize = 5 * 1024 * 1024; // 5MB
     if (file.size > maxSize) {
-      alert('File size too large. Maximum size is 5MB.');
+      showToast('File size too large. Maximum size is 5MB.', 'error');
       return;
     }
 
@@ -53,10 +81,10 @@ const ProfilePage: React.FC = () => {
       // Update user profile in database
       await updateUser({ avatar: result.imageUrl });
 
-      alert('Profile photo updated successfully!');
+      showToast('Profile photo updated successfully!', 'success');
     } catch (error: any) {
       console.error('Upload error:', error);
-      alert(error.message || 'Failed to upload profile photo');
+      showToast(error.message || 'Failed to upload profile photo', 'error');
     } finally {
       setUploading(false);
       setUploadProgress(0);
@@ -149,12 +177,8 @@ const ProfilePage: React.FC = () => {
       
       <div className="profile-stats">
         <div className="stat-item">
-          <i className="bi bi-heart"></i>
-          <span>{user?.favorites.length || 0} Favorites</span>
-        </div>
-        <div className="stat-item">
-          <i className="bi bi-bookmark"></i>
-          <span>{user?.savedRecipes.length || 0} Saved Recipes</span>
+          <i className="bi bi-heart" aria-hidden="true"></i>
+          <span>{favoriteIds.length} Favorites</span>
         </div>
         <div className="stat-item">
           <i className="bi bi-star"></i>
@@ -171,54 +195,24 @@ const ProfilePage: React.FC = () => {
           </div>
         </div>
         
-        <div className="profile-section">
+        <div className="profile-section profile-section--favorites">
           <h3>My Favorites</h3>
-          <div className="favorites-list">
-            {user?.favorites.length ? (
-              user.favorites.map((favorite, index) => (
-                <div key={index} className="favorite-item">
-                  <i className="bi bi-heart-fill"></i>
-                  <span>{favorite}</span>
-                </div>
-              ))
-            ) : (
-              <p className="no-favorites">No favorites yet. Start exploring recipes!</p>
-            )}
-          </div>
-        </div>
-
-        <div className="profile-section">
-          <h3>Saved Recipes</h3>
-          <div className="saved-recipes-list">
-            {user?.savedRecipes.length ? (
-              user.savedRecipes.map((recipe, index) => (
-                <div key={index} className="saved-recipe-item">
-                  <i className="bi bi-bookmark-fill"></i>
-                  <span>{recipe}</span>
-                </div>
-              ))
-            ) : (
-              <p className="no-saved">No saved recipes yet. Save some recipes to see them here!</p>
-            )}
-          </div>
-        </div>
-
-        <div className="profile-section">
-          <h3>Preferences</h3>
-          <div className="preferences">
-            <div className="preference-item">
-              <strong>Favorite Cuisines:</strong>
-              <span>Asian, Mediterranean</span>
+          {favoritesState === 'loading' && <RecipeGridSkeleton count={4} />}
+          {favoritesState === 'error' && <InlineError message={favoritesError} onRetry={loadFavorites} />}
+          {favoritesState === 'ready' && (visibleFavorites.length ? (
+            <div className="recipe-page-grid">
+              {visibleFavorites.map(recipe => (
+                <RecipeCard key={recipe._id} recipe={recipe} />
+              ))}
             </div>
-            <div className="preference-item">
-              <strong>Cooking Level:</strong>
-              <span>Intermediate</span>
-            </div>
-            <div className="preference-item">
-              <strong>Dietary Preferences:</strong>
-              <span>Vegetarian-friendly</span>
-            </div>
-          </div>
+          ) : (
+            <EmptyState
+              icon="bi-heart"
+              title="No saved recipes"
+              body="Tap the heart on any recipe to save it here."
+              action={{ label: 'Find recipes', to: '/all-recipes', variant: 'secondary' }}
+            />
+          ))}
         </div>
       </div>
 

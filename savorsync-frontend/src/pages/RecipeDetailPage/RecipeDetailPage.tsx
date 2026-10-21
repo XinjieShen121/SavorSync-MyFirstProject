@@ -1,899 +1,564 @@
-import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import React, { useEffect, useMemo, useState } from 'react';
+import { Link, useParams } from 'react-router-dom';
+import { Dialog, Drawer, Popover, useMediaQuery } from '@mui/material';
 import { getRecipeById } from '../../services/apiRecipe';
-import { getCulturalInsight, CulturalInsightResponse } from '../../services/apiCultural';
 import CulturalMusic from '../../components/CulturalMusic';
+import AskAboutDish from '../../components/AskAboutDish';
+import CulturalVideo from '../../components/CulturalVideo';
+import { getYouTubeId } from '../../utils/youtube';
+import { ErrorState, InlineError, InlineSpinner, LoadingState, RecipeDetailSkeleton } from '../../components/ui/States';
+import { getSubstitutions, IngredientSwaps } from '../../services/apiSubstitutions';
+import CookMode from '../../components/CookMode';
+import FavoriteButton from '../../components/FavoriteButton';
+import { savedStepKey } from '../../utils/cookMode';
 import './RecipeDetailPage.css';
+
+type Diet = 'vegetarian' | 'gluten-free' | 'low-sodium';
+
+interface SwapOption {
+  name: string;
+  diet?: Diet;
+  reason?: string;
+  // Text in the original ingredient and in the steps that this swap replaces
+  matchKey: string;
+}
+
+interface Recipe {
+  _id: string;
+  recipe_name?: string;
+  title?: string;
+  subtitle?: string;
+  cuisine?: string;
+  image?: string;
+  image_url?: string;
+  prep_time?: string;
+  cook_time?: string;
+  prepTime?: string;
+  cookTime?: string;
+  servings?: number;
+  difficulty?: string;
+  culturalBackground?: string;
+  cultural_background?: string;
+  fun_facts?: string[];
+  ingredients?: string[];
+  instructions?: string[];
+  substitutions?: { original?: string; substitute?: string; reason?: string }[];
+  shortform_video_url?: string;
+  longform_video_url?: string;
+}
+
+const DIET_LABELS: Record<Diet, string> = {
+  vegetarian: 'Vegetarian',
+  'gluten-free': 'Gluten-free',
+  'low-sodium': 'Low-sodium',
+};
+
+const MEASUREMENT = /^([\d/\s.]+(?:\s*(?:cup|tbsp|tsp|oz|g|kg|ml|l|pound|lb|slice|clove|bunch|handful|pinch|dash|teaspoon|tablespoon|ounce|gram|kilogram|milliliter|liter|pounds?|ounces?|grams?|kilograms?|milliliters?|liters?|cups?|tablespoons?|teaspoons?|slices?|cloves?|bunches?|handfuls?|pinches?|dashes?)\b)?)\s*(.+)$/i;
+
+const parseIngredient = (text: string) => {
+  if (text.includes(' | ')) {
+    const [name, quantity] = text.split(' | ');
+    return { name: name?.trim() || '', quantity: quantity?.trim() || '' };
+  }
+  const match = text.match(MEASUREMENT);
+  if (match && match[1]?.trim()) return { quantity: match[1].trim(), name: match[2]?.trim() || text };
+  return { name: text, quantity: '' };
+};
+
+const escapeRegExp = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 const RecipeDetailPage: React.FC = () => {
   const { recipeId } = useParams<{ recipeId: string }>();
-  const navigate = useNavigate();
-  const [recipe, setRecipe] = useState<any>(null);
+  const isMobile = useMediaQuery('(max-width: 599px)');
+
+  const [recipe, setRecipe] = useState<Recipe | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [activeFilter, setActiveFilter] = useState('Authentic Recipe');
-  const [currentStep, setCurrentStep] = useState(1);
-  const [substitutedIngredients, setSubstitutedIngredients] = useState<{[key: string]: string}>({});
-  const [culturalInsight, setCulturalInsight] = useState<string | null>(null);
-  const [loadingInsight, setLoadingInsight] = useState(false);
-  const [insightError, setInsightError] = useState<string | null>(null);
+  const [error, setError] = useState<'failed' | 'missing' | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
 
-  // Debug: Log the recipe ID from URL params
-  console.log(`📍 RecipeDetailPage - URL recipeId: ${recipeId}`);
-  console.log(`📍 RecipeDetailPage - Current URL: ${window.location.href}`);
+  const [storyOpen, setStoryOpen] = useState(false);
+  const [videoOpen, setVideoOpen] = useState(false);
 
-  // Helper function to convert YouTube URLs to embed format
-  const convertToEmbedUrl = (url: string): string => {
-    if (!url) {
-      console.log(`❌ No URL provided`);
-      return '';
-    }
-    
-    console.log(`🔧 Converting URL: ${url}`);
-    
-    // Check if it's a placeholder URL (contains 'example')
-    if (url.includes('example')) {
-      console.log(`❌ Placeholder URL detected: ${url}`);
-      return '';
-    }
-    
-    // Handle youtu.be format - extract video ID and convert to embed URL
-    if (url.includes('youtu.be/')) {
-      const videoId = url.split('youtu.be/')[1]?.split('?')[0];
-      if (videoId && videoId !== 'example') {
-        const embedUrl = `https://www.youtube.com/embed/${videoId}`;
-        console.log(`✅ Converted youtu.be URL: ${embedUrl}`);
-        return embedUrl;
-      }
-    }
-    
-    // Handle youtube.com/watch format
-    if (url.includes('youtube.com/watch')) {
-      const videoId = url.split('v=')[1]?.split('&')[0];
-      if (videoId && videoId !== 'example') {
-        const embedUrl = `https://www.youtube.com/embed/${videoId}`;
-        console.log(`✅ Converted youtube.com/watch URL: ${embedUrl}`);
-        return embedUrl;
-      }
-    }
-    
-    // Handle youtube.com/embed format (already correct)
-    if (url.includes('youtube.com/embed')) {
-      console.log(`✅ Already embed format: ${url}`);
-      return url;
-    }
-    
-    // Handle youtube.com/v/ format
-    if (url.includes('youtube.com/v/')) {
-      const videoId = url.split('youtube.com/v/')[1]?.split('?')[0];
-      if (videoId && videoId !== 'example') {
-        const embedUrl = `https://www.youtube.com/embed/${videoId}`;
-        console.log(`✅ Converted youtube.com/v/ URL: ${embedUrl}`);
-        return embedUrl;
-      }
-    }
-    
-    console.log(`❌ Could not convert URL: ${url}`);
-    return '';
-  };
+  const [checked, setChecked] = useState<Record<number, boolean>>({});
+  const [swaps, setSwaps] = useState<Record<number, SwapOption>>({});
+  const [activeDiet, setActiveDiet] = useState<Diet | null>(null);
+  const [swapTarget, setSwapTarget] = useState<{ index: number; anchor: HTMLElement } | null>(null);
+  const [imageFailed, setImageFailed] = useState(false);
+  const [cookStep, setCookStep] = useState<number | null>(null);
+  const [savedStep, setSavedStep] = useState<number | null>(null);
+  const [suggested, setSuggested] = useState<IngredientSwaps[]>([]);
+  const [swapsState, setSwapsState] = useState<'loading' | 'error' | 'ready'>('loading');
+  const [swapsReloadKey, setSwapsReloadKey] = useState(0);
 
-  const isValidVideoUrl = (url: string): boolean => {
-    if (!url) {
-      console.log(`❌ No URL provided`);
-      return false;
-    }
-    
-    console.log(`🔍 Validating URL: "${url}"`);
-    
-    // Check if it's a placeholder URL (contains 'example')
-    if (url.includes('example')) {
-      console.log(`❌ Placeholder URL detected: ${url}`);
-      return false;
-    }
-    
-    // Check if it's a valid YouTube URL format
-    const validFormats = [
-      'youtu.be/',
-      'youtube.com/watch',
-      'youtube.com/embed',
-      'youtube.com/v/'
-    ];
-    
-    const isValid = validFormats.some(format => url.includes(format));
-    console.log(`🔍 URL validation for "${url}": ${isValid ? 'VALID' : 'INVALID'}`);
-    return isValid;
-  };
 
-  // Fetch recipe when component mounts
   useEffect(() => {
     const fetchRecipe = async () => {
+      if (!recipeId) {
+        setError('missing');
+        setLoading(false);
+        return;
+      }
       try {
         setLoading(true);
         setError(null);
-        
-        if (recipeId) {
-          console.log(`🔍 Fetching recipe with ID: ${recipeId}`);
-          const data = await getRecipeById(recipeId);
-          
-          console.log(`📊 Recipe data received:`, {
-            id: data._id,
-            title: data.title,
-            recipe_name: data.recipe_name,
-            cuisine: data.cuisine,
-            shortform_video_url: data.shortform_video_url,
-            longform_video_url: data.longform_video_url,
-            shortform_valid: isValidVideoUrl(data.shortform_video_url),
-            longform_valid: isValidVideoUrl(data.longform_video_url)
-          });
-          
-          // Validate that we got the correct recipe
-          if (data._id !== recipeId) {
-            console.error(`❌ Recipe ID mismatch! Expected: ${recipeId}, Got: ${data._id}`);
-            setError('Recipe ID mismatch - wrong recipe loaded');
-            return;
-          }
-          
-          setRecipe(data);
-          
-          // Log video URL conversion for debugging
-          if (data.shortform_video_url) {
-            const convertedUrl = convertToEmbedUrl(data.shortform_video_url);
-            console.log(`🎥 Video URL conversion:`, {
-              original: data.shortform_video_url,
-              converted: convertedUrl,
-              will_embed: !!convertedUrl
-            });
-          }
-          
-        } else {
-          setError('No recipe ID provided');
+        const data = await getRecipeById(recipeId);
+        if (data._id !== recipeId) {
+          setError('missing');
+          return;
         }
-      } catch (err: any) {
-        console.error('❌ Error fetching recipe:', err);
-        setError(err.message || 'Failed to fetch recipe');
+        setRecipe(data);
+      } catch (err) {
+        const status = (err as { response?: { status?: number } }).response?.status;
+        setError(status === 404 || status === 400 ? 'missing' : 'failed');
       } finally {
         setLoading(false);
       }
     };
-
     fetchRecipe();
-  }, [recipeId]);
+  }, [recipeId, reloadKey]);
 
-  const handleBackToHome = () => {
-    // Try to go back to previous page, if not available go to all recipes
-    if (window.history.length > 1) {
-      navigate(-1);
-    } else {
-      navigate('/all-recipes');
-    }
-  };
+  const ingredients: string[] = recipe?.ingredients || [];
+  const instructions: string[] = recipe?.instructions || [];
+  const funFacts: string[] = recipe?.fun_facts || [];
 
-  const handleFilterClick = (filter: string) => {
-    setActiveFilter(filter);
-    setCurrentStep(1); // Reset to first step when changing filters
-  };
+  // Suggested swaps from the API (AI, or a checked table when AI is off)
+  useEffect(() => {
+    if (!recipe?._id) return;
+    let cancelled = false;
+    setSwapsState('loading');
+    getSubstitutions(recipe._id)
+      .then((result) => {
+        if (cancelled) return;
+        setSuggested(result.swaps);
+        setSwapsState('ready');
+      })
+      .catch(() => {
+        if (!cancelled) setSwapsState('error');
+      });
+    return () => { cancelled = true; };
+  }, [recipe?._id, swapsReloadKey]);
 
-  const handleStepClick = (step: number) => {
-    setCurrentStep(step);
-  };
+  // Swap options per ingredient: the recipe's own substitutions first, then suggested swaps
+  const swapOptions = useMemo(() => {
+    const own = recipe?.substitutions || [];
+    const suggestedByIndex = new Map(suggested.map((entry) => [entry.index, entry.options]));
+    return ingredients.map((ingredient, index) => {
+      const lower = ingredient.toLowerCase();
+      const options: SwapOption[] = [];
+      own.forEach((sub) => {
+        if (sub.original && sub.substitute && lower.includes(sub.original.toLowerCase())) {
+          options.push({ name: sub.substitute, reason: sub.reason, matchKey: sub.original });
+        }
+      });
+      (suggestedByIndex.get(index) || []).forEach((option) => {
+        if (options.some((o) => o.diet === option.diet || o.name.toLowerCase() === option.name.toLowerCase())) return;
+        options.push(option);
+      });
+      return options.slice(0, 3);
+    });
+  }, [recipe, suggested]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const handlePreviousStep = () => {
-    if (currentStep > 1) {
-      setCurrentStep(currentStep - 1);
-    }
-  };
+  const availableDiets = (Object.keys(DIET_LABELS) as Diet[]).filter((diet) =>
+    swapOptions.some((options) => options.some((o) => o.diet === diet)),
+  );
 
-  const handleNextStep = () => {
-    if (recipe?.instructions && currentStep < recipe.instructions.length) {
-      setCurrentStep(currentStep + 1);
-    }
-  };
-
-  const handleGetCulturalInsight = async () => {
-    if (!recipeId) {
-      setInsightError('Recipe ID not available');
+  const applyDiet = (diet: Diet | null) => {
+    setActiveDiet(diet);
+    if (!diet) {
+      setSwaps({});
       return;
     }
-
-    setLoadingInsight(true);
-    setInsightError(null);
-    
-    try {
-      console.log('🧠 Requesting cultural insight for recipe:', recipeId);
-      const response = await getCulturalInsight(recipeId);
-      
-      setCulturalInsight(response.insight);
-      console.log('✨ Cultural insight received successfully');
-    } catch (error: any) {
-      console.error('❌ Error getting cultural insight:', error);
-      setInsightError(error.message || 'Failed to get cultural insight. Please try again.');
-    } finally {
-      setLoadingInsight(false);
-    }
-  };
-
-  // Substitution helper functions
-  const getSubstitution = (ingredient: string, dietType: string) => {
-    const ingredientSubstitutions = {
-      'chicken breast': {
-        vegetarian: 'tempeh or tofu',
-        'low-sodium': 'low-sodium chicken breast',
-        'gluten-free': 'gluten-free chicken breast'
-      },
-      'soy sauce': {
-        vegetarian: 'tamari (gluten-free soy sauce)',
-        'low-sodium': 'low-sodium soy sauce',
-        'gluten-free': 'tamari or coconut aminos'
-      },
-      'flour': {
-        vegetarian: 'flour (already vegetarian)',
-        'low-sodium': 'flour (no sodium)',
-        'gluten-free': 'almond flour or coconut flour'
-      },
-      'beef': {
-        vegetarian: 'lentils or mushrooms',
-        'low-sodium': 'lean beef',
-        'gluten-free': 'gluten-free beef'
-      },
-      'pork': {
-        vegetarian: 'jackfruit or seitan',
-        'low-sodium': 'lean pork',
-        'gluten-free': 'gluten-free pork'
-      }
-    };
-
-    const lowerIngredient = ingredient.toLowerCase();
-    for (const [key, substitutions] of Object.entries(ingredientSubstitutions)) {
-      if (lowerIngredient.includes(key)) {
-        return substitutions[dietType as keyof typeof substitutions] || ingredient;
-      }
-    }
-    return ingredient;
-  };
-
-  const hasSubstitution = (ingredient: string) => {
-    const vegSub = getSubstitution(ingredient, 'vegetarian');
-    const lowSodSub = getSubstitution(ingredient, 'low-sodium');
-    const glutenSub = getSubstitution(ingredient, 'gluten-free');
-    return vegSub !== ingredient || lowSodSub !== ingredient || glutenSub !== ingredient;
-  };
-
-  const getBestSubstitution = (ingredient: string) => {
-    // Priority: vegetarian > gluten-free > low-sodium
-    const vegSub = getSubstitution(ingredient, 'vegetarian');
-    if (vegSub !== ingredient) return vegSub;
-    
-    const glutenSub = getSubstitution(ingredient, 'gluten-free');
-    if (glutenSub !== ingredient) return glutenSub;
-    
-    const lowSodSub = getSubstitution(ingredient, 'low-sodium');
-    if (lowSodSub !== ingredient) return lowSodSub;
-    
-    return ingredient;
-  };
-
-  const handleIngredientSubstitution = (ingredient: string) => {
-    if (substitutedIngredients[ingredient]) {
-      // Revert to original
-      const newSubstitutions = { ...substitutedIngredients };
-      delete newSubstitutions[ingredient];
-      setSubstitutedIngredients(newSubstitutions);
-    } else {
-      // Substitute
-      const substitution = getBestSubstitution(ingredient);
-      if (substitution !== ingredient) {
-        setSubstitutedIngredients({
-          ...substitutedIngredients,
-          [ingredient]: substitution
-        });
-      }
-    }
-  };
-
-  // Loading state
-  if (loading) {
-    return (
-      <div className="recipe-detail-page">
-        <div className="recipe-detail-container">
-          <div className="loading">Loading recipe...</div>
-        </div>
-      </div>
-    );
-  }
-
-  // Error state
-  if (error) {
-    return (
-      <div className="recipe-detail-page">
-        <div className="recipe-detail-container">
-          <h2>Error loading recipe</h2>
-          <p>{error}</p>
-          <p>Recipe ID: {recipeId}</p>
-          <button 
-            className="back-button"
-            onClick={handleBackToHome}
-          >
-            ← Back to Recipes
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  // No recipe found
-  if (!recipe) {
-    return (
-      <div className="recipe-detail-page">
-        <div className="recipe-detail-container">
-          <h2>Recipe not found</h2>
-          <p>The recipe you're looking for doesn't exist.</p>
-          <p>Recipe ID: {recipeId}</p>
-          <button 
-            className="back-button"
-            onClick={handleBackToHome}
-          >
-            ← Back to Recipes
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  const renderCulturalStory = () => {
-    console.log(`🎬 Starting renderCulturalStory for recipe:`, recipe);
-    console.log(`🎬 Recipe shortform_video_url: "${recipe.shortform_video_url}"`);
-    console.log(`🎬 Recipe title: "${recipe.title}"`);
-    console.log(`🎬 Recipe ID: "${recipe._id}"`);
-    console.log(`🎬 Full recipe object:`, recipe);
-    
-    // SIMPLIFIED LOGIC: Direct check for valid video URL
-    const hasValidVideo = recipe.shortform_video_url && 
-                         !recipe.shortform_video_url.includes('example') &&
-                         (recipe.shortform_video_url.includes('youtu.be/') || 
-                          recipe.shortform_video_url.includes('youtube.com/watch') ||
-                          recipe.shortform_video_url.includes('youtube.com/embed'));
-    
-    const shortformEmbedUrl = hasValidVideo ? convertToEmbedUrl(recipe.shortform_video_url) : '';
-    
-    // Check if longform video URL is valid
-    const isLongformValid = isValidVideoUrl(recipe.longform_video_url);
-    
-    console.log(`🎥 SIMPLIFIED LOGIC:`, {
-      recipe_id: recipe._id,
-      recipe_title: recipe.title,
-      shortform_video_url: recipe.shortform_video_url,
-      hasValidVideo: hasValidVideo,
-      shortform_embed_url: shortformEmbedUrl,
-      longform_video_url: recipe.longform_video_url,
-      longform_valid: isLongformValid,
-      will_show_video: !!shortformEmbedUrl,
-      will_show_view_more: isLongformValid
+    const next: Record<number, SwapOption> = {};
+    swapOptions.forEach((options, index) => {
+      const option = options.find((o) => o.diet === diet);
+      if (option) next[index] = option;
     });
-    
-    return (
-      <div className="cultural-story-section">
-        <h3>Cultural Background</h3>
-        <p>{recipe.culturalBackground || recipe.fun_facts?.[0] || 'Learn about the cultural significance of this dish.'}</p>
-        
-        {/* YouTube Video Section */}
-        <div className="video-section">
-          <h4>A Brief Journey into {recipe.recipe_name || recipe.title}'s Cultural Heritage</h4>
-          
+    setSwaps(next);
+  };
 
-          
-          <div className="video-container">
-            {(() => {
-              console.log(`🎬 About to render video. shortformEmbedUrl: "${shortformEmbedUrl}"`);
-              console.log(`🎬 Recipe has video URL: "${recipe.shortform_video_url}"`);
-              console.log(`🎬 Has valid video: ${hasValidVideo}`);
-              return null;
-            })()}
-            {shortformEmbedUrl ? (
-              <>
-                {(() => {
-                  console.log(`🎬 Rendering iframe with src: ${shortformEmbedUrl}`);
-                  return null;
-                })()}
-                <iframe
-                  width="100%"
-                  height="315"
-                  src={shortformEmbedUrl}
-                  title={`${recipe.recipe_name || recipe.title} Cultural Video`}
-                  frameBorder="0"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
-                ></iframe>
-              </>
-            ) : (
-              <>
-                {(() => {
-                  console.log(`🎬 Rendering video unavailable message`);
-                  console.log(`🎬 Reason: shortformEmbedUrl is empty`);
-                  return null;
-                })()}
-                <div className="video-unavailable">
-                  <div className="video-placeholder">
-                    <i className="bi bi-play-circle"></i>
-                    <p>Video not available</p>
-                    <small>This recipe does not have a valid video yet</small>
-                  </div>
-                </div>
-              </>
-            )}
-          </div>
-          
-          {/* View More button - only show if longform video is valid */}
-          {isLongformValid && (
-            <div className="video-navigation">
-              <button 
-                className="view-more-btn"
-                onClick={() => window.open(recipe.longform_video_url, '_blank')}
-              >
-                <i className="bi bi-play-circle"></i>
-                View More
-              </button>
-            </div>
+  const applySwap = (index: number, option: SwapOption) => {
+    setSwaps((prev) => ({ ...prev, [index]: option }));
+    setSwapTarget(null);
+  };
+
+  const revertSwap = (index: number) => {
+    setSwaps((prev) => {
+      const next = { ...prev };
+      delete next[index];
+      return next;
+    });
+  };
+
+  const shareRecipe = async () => {
+    const url = window.location.href;
+    if (navigator.share) {
+      await navigator.share({ title: recipe?.recipe_name || recipe?.title, url }).catch(() => {});
+    } else {
+      await navigator.clipboard?.writeText(url);
+    }
+  };
+
+  // Offer "Resume at step N" when cook mode was left mid-recipe
+  useEffect(() => {
+    if (!recipeId || cookStep !== null) return;
+    try {
+      const saved = Number(localStorage.getItem(savedStepKey(recipeId)));
+      setSavedStep(saved > 0 ? saved : null);
+    } catch {
+      setSavedStep(null);
+    }
+  }, [recipeId, cookStep]);
+
+  // Show swapped ingredients inside step text in herb green, with the original on hover
+  const renderStepText = (text: string) => {
+    // Match the full ingredient name first ("pork belly"), then the swap key ("pork")
+    const active = Object.entries(swaps).flatMap(([index, swap]) => {
+      const fullName = parseIngredient(ingredients[Number(index)]).name;
+      return [fullName, swap.matchKey].filter(Boolean).map((key) => ({ key, name: swap.name }));
+    });
+    if (!active.length) return text;
+    active.sort((a, b) => b.key.length - a.key.length);
+    const pattern = new RegExp(`(${active.map((s) => escapeRegExp(s.key)).join('|')})`, 'gi');
+    return text.split(pattern).map((part, i) => {
+      const swap = active.find((s) => s.key.toLowerCase() === part.toLowerCase());
+      return swap ? (
+        <span key={i} className="step-swap" title={`Original: ${part}`}>
+          {swap.name}
+        </span>
+      ) : (
+        part
+      );
+    });
+  };
+
+  // Loading, not-found and error states (design.md 4.7)
+  if (loading || error || !recipe) {
+    return (
+      <div className="recipe-detail-page">
+        <div className="recipe-detail-container">
+          <Link to="/all-recipes" className="btn btn--ghost recipe-back">
+            <i className="bi bi-arrow-left" aria-hidden="true"></i>
+            Recipes
+          </Link>
+          {loading ? (
+            <LoadingState label="Loading recipe">
+              <RecipeDetailSkeleton />
+            </LoadingState>
+          ) : error === 'failed' ? (
+            <ErrorState onRetry={() => setReloadKey((k) => k + 1)} exit={{ label: 'Back to recipes', to: '/all-recipes' }} />
+          ) : (
+            <ErrorState
+              title="This recipe isn't here"
+              body="It may have been removed. Browse other dishes instead."
+              primary={{ label: 'Browse recipes', to: '/all-recipes', variant: 'primary' }}
+            />
           )}
         </div>
-
-        <button 
-          className="cultural-insight-btn"
-          onClick={handleGetCulturalInsight}
-          disabled={loadingInsight}
-        >
-          <i className={`bi ${loadingInsight ? 'bi-hourglass-split' : 'bi-lightbulb'}`}></i>
-          {loadingInsight ? 'Generating Insight...' : 'Get Cultural Insight'}
-        </button>
-        
-        {/* Cultural Insight Display */}
-        {culturalInsight && (
-          <div className="cultural-insight-display">
-            <div className="insight-header">
-              <i className="bi bi-book"></i>
-              <h4>Cultural Insight</h4>
-            </div>
-            <div className="insight-content">
-              <p>{culturalInsight}</p>
-            </div>
-          </div>
-        )}
-        
-        {insightError && (
-          <div className="cultural-insight-error">
-            <i className="bi bi-exclamation-triangle"></i>
-            <p>{insightError}</p>
-          </div>
-        )}
-        </div>
-    );
-  };
-
-  const renderAuthenticRecipe = () => (
-    <div className="recipe-section">
-      <div className="recipe-header">
-        <h3>Authentic Recipe</h3>
-        <div className="recipe-meta">
-          <span>⏱️ {recipe.prepTime || '30 min'}</span>
-          <span>🔥 {recipe.cookTime || '45 min'}</span>
-          <span>👥 {recipe.servings || '4'} servings</span>
-          <span>📊 {recipe.difficulty || 'Medium'}</span>
-        </div>
-      </div>
-
-      <div className="recipe-content">
-        <div className="ingredients-section">
-          <h4>Ingredients</h4>
-          <ul>
-            {recipe.ingredients && recipe.ingredients.map((ingredient: string, index: number) => {
-              const isSubstituted = substitutedIngredients[ingredient];
-              const displayIngredient = isSubstituted || ingredient;
-              const hasSub = hasSubstitution(ingredient);
-              
-              // Smart parsing function to separate ingredient name and quantity
-              const parseIngredient = (ingredientText: string) => {
-                // Handle " | " separator format
-                if (ingredientText.includes(' | ')) {
-                  const parts = ingredientText.split(' | ');
-                  return {
-                    name: parts[0]?.trim() || '',
-                    quantity: parts[1]?.trim() || ''
-                  };
-                }
-                
-                // Handle patterns like "500g boneless chicken breast" or "2 tablespoons soy sauce"
-                const measurementPattern = /^([\d\/\s\.]+(?:\s*(?:cup|tbsp|tsp|oz|g|kg|ml|l|pound|lb|slice|clove|bunch|handful|pinch|dash|teaspoon|tablespoon|ounce|gram|kilogram|milliliter|liter|pounds?|ounces?|grams?|kilograms?|milliliters?|liters?|cups?|tablespoons?|teaspoons?|slices?|cloves?|bunches?|handfuls?|pinches?|dashes?))?)\s*(.+)$/i;
-                let match = ingredientText.match(measurementPattern);
-                
-                if (match && match[1]?.trim()) {
-                  return {
-                    quantity: match[1]?.trim() || '',
-                    name: match[2]?.trim() || ingredientText
-                  };
-                }
-                
-                // Handle simple numbers at the beginning like "1 green bell pepper"
-                const simpleNumberPattern = /^(\d+)\s+(.+)$/;
-                match = ingredientText.match(simpleNumberPattern);
-                
-                if (match) {
-                  return {
-                    quantity: match[1]?.trim() || '',
-                    name: match[2]?.trim() || ingredientText
-                  };
-                }
-                
-                // If no pattern found, return as is
-                return {
-                  name: ingredientText,
-                  quantity: ''
-                };
-              };
-              
-              const { name, quantity } = parseIngredient(displayIngredient);
-              
-              return (
-                <li key={index} className={isSubstituted ? 'substituted' : ''}>
-                  <input type="checkbox" id={`ingredient-${index}`} />
-                  <div className="ingredient-content">
-                    <div className="ingredient-name-section">
-                      <label htmlFor={`ingredient-${index}`} className="ingredient-name">{name}</label>
-                      {hasSub && (
-                        <button 
-                          className="substitute-btn" 
-                          title={isSubstituted ? "Revert to original" : "View substitution"}
-                          onClick={() => handleIngredientSubstitution(ingredient)}
-                        >
-                          <i className={`bi ${isSubstituted ? 'bi-arrow-counterclockwise' : 'bi-arrow-repeat'}`}></i>
-                        </button>
-                      )}
-                    </div>
-                    {quantity && <span className="ingredient-quantity">{quantity}</span>}
-                  </div>
-                </li>
-              );
-            })}
-          </ul>
-        </div>
-
-        <div className="instructions-section">
-          <h4>Instructions</h4>
-          
-          {/* Progress Timeline */}
-          <div className="progress-timeline">
-            <div className="timeline-header">
-              <span className="progress-text">Step {currentStep} of {recipe.instructions?.length || 0}</span>
-              <div className="progress-bar">
-                <div 
-                  className="progress-fill" 
-                  style={{ width: `${(currentStep / (recipe.instructions?.length || 1)) * 100}%` }}
-                ></div>
-              </div>
-            </div>
-            
-            <div className="timeline-steps">
-              {recipe.instructions && recipe.instructions.map((_: string, index: number) => (
-                <div 
-                  key={index}
-                  className={`timeline-step ${currentStep > index + 1 ? 'completed' : currentStep === index + 1 ? 'current' : 'pending'}`}
-                  onClick={() => handleStepClick(index + 1)}
-                >
-                  <div className="step-indicator">
-                    {currentStep > index + 1 ? (
-                      <i className="bi bi-check-circle-fill"></i>
-                    ) : currentStep === index + 1 ? (
-                      <i className="bi bi-circle-fill"></i>
-                    ) : (
-                      <i className="bi bi-circle"></i>
-                    )}
-                  </div>
-                  <span className="step-number">{index + 1}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="current-step">
-            <h5>Step {currentStep}</h5>
-            <p>{recipe.instructions && recipe.instructions[currentStep - 1] || 'Step instructions will be displayed here.'}</p>
-            
-            {/* Fun Fact Section - Display if fun_facts array exists and has a fact for this step */}
-            {recipe.fun_facts && 
-             recipe.fun_facts[currentStep - 1] && (
-              <div className="fun-fact-box">
-                <div className="fun-fact-icon">
-                  <i className="bi bi-info-circle"></i>
-                </div>
-                <div className="fun-fact-content">
-                  <p>{recipe.fun_facts[currentStep - 1]}</p>
-                </div>
-              </div>
-            )}
-
-            {/* Congratulations Message - Show when user reaches the last step */}
-            {currentStep === (recipe.instructions?.length || 1) && (
-              <div className="congratulations-box">
-                <div className="congratulations-icon">
-                  <i className="bi bi-check-circle-fill"></i>
-                </div>
-                <div className="congratulations-content">
-                  <h4>🎉 Recipe Complete!</h4>
-                  <p>Great job! You've successfully prepared <strong>{recipe.recipe_name || recipe.title}</strong>.</p>
-                  <p>Enjoy your delicious {recipe.cuisine} dish!</p>
-                </div>
-              </div>
-            )}
-
-            <div className="step-navigation">
-              <button 
-                className="nav-btn prev-btn"
-                onClick={handlePreviousStep}
-                disabled={currentStep === 1}
-              >
-                ← Previous
-            </button>
-            <button 
-                className="nav-btn next-btn"
-              onClick={handleNextStep}
-                disabled={currentStep === (recipe.instructions?.length || 1)}
-            >
-              Next →
-            </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-
-  const renderHealthConscious = () => {
-    // Check if longform video URL is valid
-    const isLongformValid = isValidVideoUrl(recipe.longform_video_url);
-    const longformEmbedUrl = isLongformValid ? convertToEmbedUrl(recipe.longform_video_url) : '';
-    
-    // Sample ingredient substitutions (in a real app, these would come from the database)
-    const ingredientSubstitutions = {
-      'chicken breast': {
-        vegetarian: 'tempeh or tofu',
-        'low-sodium': 'low-sodium chicken breast',
-        'gluten-free': 'gluten-free chicken breast'
-      },
-      'soy sauce': {
-        vegetarian: 'tamari (gluten-free soy sauce)',
-        'low-sodium': 'low-sodium soy sauce',
-        'gluten-free': 'tamari or coconut aminos'
-      },
-      'flour': {
-        vegetarian: 'flour (already vegetarian)',
-        'low-sodium': 'flour (no sodium)',
-        'gluten-free': 'almond flour or coconut flour'
-      },
-      'beef': {
-        vegetarian: 'lentils or mushrooms',
-        'low-sodium': 'lean beef',
-        'gluten-free': 'gluten-free beef'
-      },
-      'pork': {
-        vegetarian: 'jackfruit or seitan',
-        'low-sodium': 'lean pork',
-        'gluten-free': 'gluten-free pork'
-      }
-    };
-
-    const getSubstitution = (ingredient: string, dietType: string) => {
-      const lowerIngredient = ingredient.toLowerCase();
-      for (const [key, substitutions] of Object.entries(ingredientSubstitutions)) {
-        if (lowerIngredient.includes(key)) {
-          return substitutions[dietType as keyof typeof substitutions] || ingredient;
-        }
-      }
-      return ingredient; // Return original if no substitution found
-    };
-    
-    return (
-      <div className="health-section">
-        <h3>Health-Conscious Options</h3>
-        <p>Discover healthier alternatives and nutritional information for this recipe.</p>
-        
-        {/* Ingredient Substitutions Section */}
-        <div className="ingredients-substitutions">
-          <h4>Ingredient Substitutions</h4>
-          <p>See healthier alternatives for each ingredient below:</p>
-          
-          <div className="substitution-categories">
-            {/* Vegetarian Substitutions */}
-            {(() => {
-              const vegetarianSubstitutions = recipe.ingredients?.filter((ingredient: string) => {
-                const substitution = getSubstitution(ingredient, 'vegetarian');
-                return substitution !== ingredient;
-              }).map((ingredient: string, index: number) => ({
-                original: ingredient,
-                substitution: getSubstitution(ingredient, 'vegetarian')
-              })) || [];
-
-              return vegetarianSubstitutions.length > 0 ? (
-                <div className="substitution-category vegetarian-category">
-                  <div className="category-header">
-                    <img 
-                      src="https://img.icons8.com/?size=100&id=3380&format=png&color=000000" 
-                      alt="Vegetarian" 
-                      className="category-icon"
-                    />
-                    <h5>Vegetarian Alternatives</h5>
-                  </div>
-                  <div className="substitution-list">
-                    {vegetarianSubstitutions.map((item: { original: string; substitution: string }, index: number) => (
-                      <div key={`veg-${index}`} className="substitution-item has-substitution">
-                        <div className="original-ingredient">
-                          <span className="ingredient-label">Original:</span>
-                          <span className="ingredient-text">{item.original}</span>
-                        </div>
-                        <div className="substitution-ingredient">
-                          <span className="ingredient-label">Vegetarian:</span>
-                          <span className="ingredient-text substitute">{item.substitution}</span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ) : null;
-            })()}
-
-            {/* Low-Sodium Substitutions */}
-            {(() => {
-              const lowSodiumSubstitutions = recipe.ingredients?.filter((ingredient: string) => {
-                const substitution = getSubstitution(ingredient, 'low-sodium');
-                return substitution !== ingredient;
-              }).map((ingredient: string, index: number) => ({
-                original: ingredient,
-                substitution: getSubstitution(ingredient, 'low-sodium')
-              })) || [];
-
-              return lowSodiumSubstitutions.length > 0 ? (
-                <div className="substitution-category low-sodium-category">
-                  <div className="category-header">
-                    <img 
-                      src="https://img.icons8.com/?size=100&id=6820&format=png&color=000000" 
-                      alt="Low Sodium" 
-                      className="category-icon"
-                    />
-                    <h5>Low-Sodium Alternatives</h5>
-                  </div>
-                  <div className="substitution-list">
-                    {lowSodiumSubstitutions.map((item: { original: string; substitution: string }, index: number) => (
-                      <div key={`low-sodium-${index}`} className="substitution-item has-substitution">
-                        <div className="original-ingredient">
-                          <span className="ingredient-label">Original:</span>
-                          <span className="ingredient-text">{item.original}</span>
-                        </div>
-                        <div className="substitution-ingredient">
-                          <span className="ingredient-label">Low-Sodium:</span>
-                          <span className="ingredient-text substitute">{item.substitution}</span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ) : null;
-            })()}
-
-            {/* Gluten-Free Substitutions */}
-            {(() => {
-              const glutenFreeSubstitutions = recipe.ingredients?.filter((ingredient: string) => {
-                const substitution = getSubstitution(ingredient, 'gluten-free');
-                return substitution !== ingredient;
-              }).map((ingredient: string, index: number) => ({
-                original: ingredient,
-                substitution: getSubstitution(ingredient, 'gluten-free')
-              })) || [];
-
-              return glutenFreeSubstitutions.length > 0 ? (
-                <div className="substitution-category gluten-free-category">
-                  <div className="category-header">
-                    <img 
-                      src="https://img.icons8.com/?size=100&id=6758&format=png&color=000000" 
-                      alt="Gluten Free" 
-                      className="category-icon"
-                    />
-                    <h5>Gluten-Free Alternatives</h5>
-                  </div>
-                  <div className="substitution-list">
-                    {glutenFreeSubstitutions.map((item: { original: string; substitution: string }, index: number) => (
-                      <div key={`gluten-free-${index}`} className="substitution-item has-substitution">
-                        <div className="original-ingredient">
-                          <span className="ingredient-label">Original:</span>
-                          <span className="ingredient-text">{item.original}</span>
-                        </div>
-                        <div className="substitution-ingredient">
-                          <span className="ingredient-label">Gluten-Free:</span>
-                          <span className="ingredient-text substitute">{item.substitution}</span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ) : null;
-            })()}
-
-            {/* No Substitutions Available Message */}
-            {(() => {
-              const hasAnySubstitutions = 
-                (recipe.ingredients?.filter((ingredient: string) => {
-                  const vegSub = getSubstitution(ingredient, 'vegetarian');
-                  const lowSodSub = getSubstitution(ingredient, 'low-sodium');
-                  const glutenSub = getSubstitution(ingredient, 'gluten-free');
-                  return vegSub !== ingredient || lowSodSub !== ingredient || glutenSub !== ingredient;
-                }).length || 0) > 0;
-
-              return !hasAnySubstitutions ? (
-                <div className="no-substitutions-message">
-                  <i className="bi bi-check-circle"></i>
-                  <h5>Great News!</h5>
-                  <p>This recipe is already quite healthy and doesn't require major ingredient substitutions. All ingredients are suitable for most dietary preferences.</p>
-                </div>
-              ) : null;
-            })()}
-          </div>
-        </div>
       </div>
     );
-  };
+  }
 
-  const renderCulturalMusic = () => (
-    <div className="music-section">
-      <CulturalMusic recipe={recipe} />
+  const title = recipe.recipe_name || recipe.title;
+  const imageSrc = recipe.image_url || (recipe.image && !recipe.image.startsWith('/api/placeholder') ? recipe.image : '');
+  const story: string | undefined = recipe.culturalBackground || recipe.cultural_background || funFacts[0];
+  const storyIsFirstFact = !recipe.culturalBackground && !recipe.cultural_background && !!funFacts[0];
+  const hasShortVideo = !!getYouTubeId(recipe.shortform_video_url);
+  const hasLongVideo = !!getYouTubeId(recipe.longform_video_url);
+  // The short video opens from the story card; without a story card it goes in the Video section
+  const sectionVideo = hasLongVideo
+    ? { recipe_name: title, longform_video_url: recipe.longform_video_url }
+    : !story && hasShortVideo
+      ? { recipe_name: title, shortform_video_url: recipe.shortform_video_url }
+      : null;
+  const prep = recipe.prep_time || recipe.prepTime;
+  const cook = recipe.cook_time || recipe.cookTime;
+  const swapCount = Object.keys(swaps).length;
+  const cookIngredients = ingredients.map((ingredient, index) => {
+    const { name, quantity } = parseIngredient(ingredient);
+    const swap = swaps[index];
+    return swap ? { quantity, name: swap.name, swappedFrom: name } : { quantity, name };
+  });
+  const tips = instructions.map((_, index) => (index === 0 && storyIsFirstFact ? undefined : funFacts[index]));
+  const target = swapTarget ? swapOptions[swapTarget.index] : [];
+
+  const swapPanel = swapTarget && (
+    <div className="swap-panel" role="dialog" aria-label={`Swaps for ${parseIngredient(ingredients[swapTarget.index]).name}`}>
+      <ul className="swap-options">
+        {target.map((option, i) => (
+          <li key={i} className="swap-option">
+            <div className="swap-option__text">
+              <span className="swap-option__name">{option.name}</span>
+              {option.diet && <span className="badge badge--diet">{DIET_LABELS[option.diet]}</span>}
+              {option.reason && <p className="swap-option__reason">{option.reason}</p>}
+            </div>
+            <button type="button" className="btn btn--primary btn--sm" onClick={() => applySwap(swapTarget.index, option)}>
+              Use this
+            </button>
+          </li>
+        ))}
+      </ul>
     </div>
   );
-
-  const renderContent = () => {
-    switch (activeFilter) {
-      case 'Authentic Recipe':
-        return renderAuthenticRecipe();
-      case 'Cultural Story':
-        return renderCulturalStory();
-      case 'Health-Conscious':
-        return renderHealthConscious();
-      case 'Cultural Music':
-        return renderCulturalMusic();
-      default:
-        return renderAuthenticRecipe();
-    }
-  };
 
   return (
     <div className="recipe-detail-page">
       <div className="recipe-detail-container">
-        {/* Header */}
-        <div className="recipe-detail-header">
-          <button className="back-button" onClick={handleBackToHome}>
-            ← Back to Recipes
-          </button>
-          <h1 className="recipe-detail-title">{recipe.title || recipe.recipe_name}</h1>
-          <p className="recipe-detail-subtitle">
-            {recipe.subtitle || `A delicious ${recipe.cuisine} dish`}
-          </p>
+        <Link to="/all-recipes" className="btn btn--ghost recipe-back">
+          <i className="bi bi-arrow-left" aria-hidden="true"></i>
+          Recipes
+        </Link>
+
+        {/* 1. Hero */}
+        <div className="recipe-hero">
+          {imageSrc && !imageFailed ? (
+            <img src={imageSrc} alt={title} onError={() => setImageFailed(true)} />
+          ) : (
+            <div className="recipe-hero__fallback" aria-hidden="true">
+              <i className="bi bi-image"></i>
+            </div>
+          )}
+          {recipe.cuisine && <span className="badge badge--cuisine recipe-hero__badge">{recipe.cuisine}</span>}
         </div>
 
-        {/* Filter Buttons */}
-        <div className="filter-buttons">
-          {['Authentic Recipe', 'Cultural Story', 'Health-Conscious', 'Cultural Music'].map(filter => (
-          <button 
-              key={filter}
-              className={`filter-btn ${activeFilter === filter ? 'active' : ''}`}
-              onClick={() => handleFilterClick(filter)}
-          >
-              {filter === 'Cultural Music' && <i className="bi bi-music-note"></i>}
-              {filter}
-          </button>
-          ))}
+        {/* 2. Header */}
+        <header className="recipe-header">
+          <h1 className="recipe-name">{title}</h1>
+          {recipe.subtitle && <p className="recipe-tagline">{recipe.subtitle}</p>}
+          <ul className="recipe-facts">
+            {prep && (
+              <li><i className="bi bi-clock" aria-hidden="true"></i>Prep {prep}</li>
+            )}
+            {cook && (
+              <li><i className="bi bi-fire" aria-hidden="true"></i>Cook {cook}</li>
+            )}
+            {recipe.servings && (
+              <li><i className="bi bi-people" aria-hidden="true"></i>{recipe.servings} servings</li>
+            )}
+            {recipe.difficulty && (
+              <li><i className="bi bi-bar-chart" aria-hidden="true"></i>{recipe.difficulty}</li>
+            )}
+          </ul>
+          <div className="recipe-actions">
+            <FavoriteButton recipeId={recipe._id} recipeName={title || 'this recipe'} />
+            <button type="button" className="btn btn--icon" aria-label="Share recipe" onClick={shareRecipe}>
+              <i className="bi bi-share" aria-hidden="true"></i>
+            </button>
+            <button type="button" className="btn btn--icon" aria-label="Print recipe" onClick={() => window.print()}>
+              <i className="bi bi-printer" aria-hidden="true"></i>
+            </button>
+          </div>
+        </header>
+
+        {/* 3. Cultural story card (4.4) */}
+        {story && (
+          <section className="recipe-story" aria-labelledby="story-title">
+            <p className="recipe-story__overline" id="story-title">
+              <i className="bi bi-globe2" aria-hidden="true"></i>The story
+            </p>
+            <p className={`recipe-story__body ${storyOpen ? 'is-open' : ''}`} id="story-body">
+              {story}
+            </p>
+            <div className="recipe-story__actions">
+              <button
+                type="button"
+                className="btn btn--ghost btn--sm"
+                aria-expanded={storyOpen}
+                aria-controls="story-body"
+                onClick={() => setStoryOpen((open) => !open)}
+              >
+                {storyOpen ? 'Show less' : 'Read the story'}
+              </button>
+              {hasShortVideo && (
+                <button type="button" className="btn btn--ghost btn--sm" onClick={() => setVideoOpen(true)}>
+                  <i className="bi bi-play-circle" aria-hidden="true"></i>Watch
+                </button>
+              )}
+            </div>
+
+            {storyOpen && (
+              <div className="recipe-story__ai">
+                <AskAboutDish recipe={recipe} />
+              </div>
+            )}
+          </section>
+        )}
+
+        {/* 4. Ingredients and steps */}
+        <div className="recipe-columns">
+          <section className="ingredients" aria-labelledby="ingredients-title">
+            <h2 id="ingredients-title" className="recipe-section-title">Ingredients</h2>
+
+            {swapsState === 'loading' && (
+              <div className="diet-selector diet-selector--status">
+                <InlineSpinner label="Finding ingredient swaps" />
+                <span aria-hidden="true">Finding vegetarian, gluten-free and low-sodium swaps</span>
+              </div>
+            )}
+            {swapsState === 'error' && (
+              <div className="diet-selector diet-selector--status">
+                <InlineError message="Couldn't load ingredient swaps." onRetry={() => setSwapsReloadKey((k) => k + 1)} />
+              </div>
+            )}
+            {availableDiets.length > 0 && (
+              <div className="diet-selector">
+                <div className="diet-selector__chips" role="group" aria-label="Diet">
+                  <button type="button" className="chip" aria-pressed={activeDiet === null} onClick={() => applyDiet(null)}>
+                    {activeDiet === null && <i className="bi bi-check" aria-hidden="true"></i>}Original
+                  </button>
+                  {availableDiets.map((diet) => (
+                    <button key={diet} type="button" className="chip" aria-pressed={activeDiet === diet} onClick={() => applyDiet(diet)}>
+                      {activeDiet === diet && <i className="bi bi-check" aria-hidden="true"></i>}
+                      {DIET_LABELS[diet]}
+                    </button>
+                  ))}
+                </div>
+                {swapCount > 0 && (
+                  <p className="diet-selector__count" aria-live="polite">
+                    {swapCount} {swapCount === 1 ? 'swap' : 'swaps'} applied
+                    <button type="button" className="btn btn--ghost btn--sm" onClick={() => applyDiet(null)}>Undo</button>
+                  </p>
+                )}
+              </div>
+            )}
+
+            <ul className="ingredient-list">
+              {ingredients.map((ingredient, index) => {
+                const original = parseIngredient(ingredient);
+                const swap = swaps[index];
+                const options = swapOptions[index];
+                const isChecked = !!checked[index];
+                return (
+                  <li key={index} className={`ingredient-row ${swap ? 'is-swapped' : ''}`}>
+                    <label className="ingredient-row__main">
+                      <input
+                        type="checkbox"
+                        className="ingredient-check"
+                        checked={isChecked}
+                        onChange={() => setChecked((prev) => ({ ...prev, [index]: !prev[index] }))}
+                      />
+                      <span className="ingredient-row__qty">{original.quantity}</span>
+                      <span className={`ingredient-row__name ${isChecked ? 'is-checked' : ''}`}>
+                        {swap ? swap.name : original.name}
+                        {swap && <span className="ingredient-row__instead"> instead of {original.name}</span>}
+                      </span>
+                    </label>
+                    {swap && <span className="badge badge--swapped">Swapped</span>}
+                    {swap ? (
+                      <button type="button" className="btn btn--ghost btn--sm" onClick={() => revertSwap(index)}>
+                        <i className="bi bi-arrow-counterclockwise" aria-hidden="true"></i>Revert
+                      </button>
+                    ) : (
+                      options.length > 0 && (
+                        <button
+                          type="button"
+                          className="btn btn--icon btn--sm swap-button"
+                          aria-label={`Swap ${original.name}`}
+                          onClick={(e) => setSwapTarget({ index, anchor: e.currentTarget })}
+                        >
+                          <i className="bi bi-arrow-left-right" aria-hidden="true"></i>
+                        </button>
+                      )
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+          </section>
+
+          <section className="steps" aria-labelledby="steps-title">
+            <h2 id="steps-title" className="recipe-section-title">Steps</h2>
+            <ol className="step-list">
+              {instructions.map((step, index) => {
+                const fact = tips[index];
+                return (
+                  <li key={index} className="step">
+                    <button
+                      type="button"
+                      className="step__number"
+                      aria-label={`Cook from step ${index + 1}`}
+                      onClick={() => setCookStep(index)}
+                    >
+                      {index + 1}
+                    </button>
+                    <div className="step__body">
+                      <p>{renderStepText(step)}</p>
+                      {fact && (
+                        <div className="tip-box">
+                          <i className="bi bi-lightbulb" aria-hidden="true"></i>
+                          <p>{fact}</p>
+                        </div>
+                      )}
+                    </div>
+                  </li>
+                );
+              })}
+            </ol>
+          </section>
         </div>
 
-        {/* Main Content Area */}
-        <div className="main-content">
-          {renderContent()}
-        </div>
+        {/* 5. More sections */}
+        <section className="recipe-more" id="music" aria-labelledby="music-title">
+          <h2 id="music-title" className="recipe-section-title">Cook with music</h2>
+          <CulturalMusic recipe={{ ...recipe, cuisine: recipe.cuisine || "" }} />
+        </section>
+
+        {sectionVideo && (
+          <section className="recipe-more" id="video" aria-labelledby="video-title">
+            <h2 id="video-title" className="recipe-section-title">Video</h2>
+            <CulturalVideo recipe={sectionVideo} />
+          </section>
+        )}
       </div>
+
+      {/* 6. Docked Start Cooking button */}
+      {instructions.length > 0 && cookStep === null && (
+        <div className="cook-dock">
+          <button type="button" className="btn btn--primary btn--lg cook-dock__button" onClick={() => setCookStep(savedStep ?? 0)}>
+            <i className="bi bi-play-fill" aria-hidden="true"></i>
+            {savedStep !== null && savedStep < instructions.length ? `Resume at step ${savedStep + 1}` : 'Start cooking'}
+          </button>
+        </div>
+      )}
+
+      {cookStep !== null && recipeId && (
+        <CookMode
+          recipeId={recipeId}
+          title={title || 'this dish'}
+          steps={instructions}
+          tips={tips}
+          ingredients={cookIngredients}
+          checked={checked}
+          onToggleIngredient={(index) => setChecked((prev) => ({ ...prev, [index]: !prev[index] }))}
+          startStep={cookStep}
+          onClose={() => setCookStep(null)}
+        />
+      )}
+
+      {/* Swap popover (desktop) or bottom sheet (mobile) */}
+      {isMobile ? (
+        <Drawer anchor="bottom" open={!!swapTarget} onClose={() => setSwapTarget(null)} PaperProps={{ className: 'swap-sheet' }}>
+          {swapPanel}
+        </Drawer>
+      ) : (
+        <Popover
+          open={!!swapTarget}
+          anchorEl={swapTarget?.anchor}
+          onClose={() => setSwapTarget(null)}
+          anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+          transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+          PaperProps={{ className: 'swap-popover' }}
+        >
+          {swapPanel}
+        </Popover>
+      )}
+
+      {hasShortVideo && (
+        <Dialog open={videoOpen} onClose={() => setVideoOpen(false)} maxWidth="md" fullWidth aria-label={`${title} story video`}>
+          <CulturalVideo recipe={{ recipe_name: title, shortform_video_url: recipe.shortform_video_url }} autoPlay />
+        </Dialog>
+      )}
     </div>
   );
 };
 
-export default RecipeDetailPage; 
+export default RecipeDetailPage;

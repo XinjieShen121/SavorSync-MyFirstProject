@@ -6,6 +6,8 @@ import "./App.css";
 
 // Import context
 import { UserProvider } from "./context/UserContext";
+import { ToastProvider } from "./context/ToastContext";
+import SiteNav from "./components/SiteNav";
 import { theme } from "./theme";
 
 // Import pages
@@ -18,11 +20,9 @@ import RecipeDetailPage from "./pages/RecipeDetailPage/RecipeDetailPage";
 
 import StatusPage from "./pages/StatusPage";
 import AllRecipesPage from "./pages/AllRecipesPage/AllRecipesPage";
-import ImageUploadDemo from "./pages/ImageUploadDemo/ImageUploadDemo";
 import TrendingRecipesPage from "./pages/TrendingRecipesPage/TrendingRecipesPage";
 import CommunityPage from "./pages/CommunityPage/CommunityPage";
 import UserProfilePage from "./pages/UserProfilePage/UserProfilePage";
-import ProfileImageUploadDemo from "./pages/ProfileImageUploadDemo/ProfileImageUploadDemo";
 import CreatePostPage from "./pages/CreatePostPage/CreatePostPage";
 import PostDetailPage from "./pages/PostDetailPage/PostDetailPage";
 import CallbackPage from "./pages/CallbackPage";
@@ -35,15 +35,8 @@ function App() {
     link.href = 'https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css';
     document.head.appendChild(link);
 
-    // Add Google Fonts
-    const fontsLink = document.createElement('link');
-    fontsLink.rel = 'stylesheet';
-    fontsLink.href = 'https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700;800&family=Poppins:wght@300;400;500;600;700&family=Quicksand:wght@400;500;600;700&display=swap';
-    document.head.appendChild(fontsLink);
-
     return () => {
       document.head.removeChild(link);
-      document.head.removeChild(fontsLink);
     };
   }, []);
 
@@ -51,7 +44,9 @@ function App() {
     <ThemeProvider theme={theme}>
       <CssBaseline />
     <UserProvider>
+    <ToastProvider>
       <Router>
+        <SiteNav />
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/login" element={<LoginPage />} />
@@ -60,18 +55,18 @@ function App() {
 
           <Route path="/cuisine/:cuisineId" element={<CuisinePage />} />
           <Route path="/recipe/:recipeId" element={<RecipeDetailPage />} />
-            <Route path="/status" element={<StatusPage />} />
+            {/* API status page is a developer tool, so it only exists in local dev */}
+            {import.meta.env.DEV && <Route path="/status" element={<StatusPage />} />}
             <Route path="/all-recipes" element={<AllRecipesPage />} />
-            <Route path="/upload-demo" element={<ImageUploadDemo />} />
             <Route path="/trending-recipes" element={<TrendingRecipesPage />} />
             <Route path="/community" element={<CommunityPage />} />
             <Route path="/create-post" element={<CreatePostPage />} />
             <Route path="/post/:postId" element={<PostDetailPage />} />
             <Route path="/callback" element={<CallbackPage />} />
             <Route path="/profile/:userId" element={<UserProfilePage />} />
-            <Route path="/profile-upload-demo" element={<ProfileImageUploadDemo />} />
         </Routes>
       </Router>
+    </ToastProvider>
     </UserProvider>
     </ThemeProvider>
   );
