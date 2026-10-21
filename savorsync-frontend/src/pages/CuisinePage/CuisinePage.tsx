@@ -329,9 +329,7 @@ const CuisinePage: React.FC = () => {
             {recipes.map((recipe) => (
               <RecipeCard
                 key={recipe._id}
-                recipe={recipe}
-                onClick={() => navigate(`/recipe/${recipe._id}`)}
-              />
+                recipe={recipe} />
             ))}
           </div>
         )}

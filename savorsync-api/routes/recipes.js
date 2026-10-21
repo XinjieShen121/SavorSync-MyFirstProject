@@ -1,6 +1,10 @@
 const express = require('express');
 const { recipeDb } = require('../config/mongoose');
 const { authenticateToken } = require('../middleware/auth');
+const { ObjectId } = require('mongodb');
+const User = require('../models/User');
+
+const toObjectId = (id) => (ObjectId.isValid(id) ? new ObjectId(id) : null);
 
 const router = express.Router();
 
@@ -107,6 +111,24 @@ router.get('/', async (req, res) => {
   } catch (error) {
     console.error('Get all recipes error:', error);
     res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// The signed-in user's favorite recipes, newest first
+router.get('/favorites', authenticateToken, async (req, res) => {
+  try {
+    const ids = (req.user.favorites || []).filter(id => ObjectId.isValid(id));
+    const recipes = await recipeDb.db.collection('recipes')
+      .find({ _id: { $in: ids.map(id => new ObjectId(id)) } })
+      .toArray();
+
+    const order = new Map(ids.map((id, index) => [id, index]));
+    recipes.sort((a, b) => order.get(String(b._id)) - order.get(String(a._id)));
+
+    res.json({ recipes });
+  } catch (error) {
+    console.error('Get favorites error:', error);
+    res.status(500).json({ error: 'Couldn\'t load your favorites. Please try again.' });
   }
 });
 
@@ -340,26 +362,46 @@ router.post('/generate', authenticateToken, async (req, res) => {
   }
 });
 
-// Favorite a recipe
+// Favorites: a signed-in user's saved recipe ids live on their user document
+// Save a recipe to the signed-in user's favorites
 router.post('/:id/favorite', authenticateToken, async (req, res) => {
   try {
-    const { id } = req.params;
-    const userId = req.user.id;
-
-    // Use the real MongoDB collection directly
-    const recipesCollection = recipeDb.db.collection('recipes');
-    const recipe = await recipesCollection.findOne({ _id: id });
-
-    if (!recipe) {
-      return res.status(404).json({ error: 'Recipe not found' });
+    const objectId = toObjectId(req.params.id);
+    if (!objectId) {
+      return res.status(400).json({ error: 'That recipe link looks wrong.' });
     }
 
-    // Here you would typically update the user's favorites
-    // For now, just return success
-    res.json({ message: 'Recipe favorited successfully' });
+    const recipe = await recipeDb.db.collection('recipes').findOne({ _id: objectId }, { projection: { _id: 1 } });
+    if (!recipe) {
+      return res.status(404).json({ error: 'We couldn\'t find that recipe.' });
+    }
+
+    const user = await User.findByIdAndUpdate(
+      req.user._id,
+      { $addToSet: { favorites: req.params.id } },
+      { new: true }
+    ).select('favorites');
+
+    res.json({ favorites: user.favorites });
   } catch (error) {
     console.error('Favorite recipe error:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    res.status(500).json({ error: 'Couldn\'t save this recipe. Please try again.' });
+  }
+});
+
+// Remove a recipe from the signed-in user's favorites
+router.delete('/:id/favorite', authenticateToken, async (req, res) => {
+  try {
+    const user = await User.findByIdAndUpdate(
+      req.user._id,
+      { $pull: { favorites: req.params.id } },
+      { new: true }
+    ).select('favorites');
+
+    res.json({ favorites: user.favorites });
+  } catch (error) {
+    console.error('Unfavorite recipe error:', error);
+    res.status(500).json({ error: 'Couldn\'t remove this recipe. Please try again.' });
   }
 });
 

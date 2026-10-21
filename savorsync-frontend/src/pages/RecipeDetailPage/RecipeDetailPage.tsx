@@ -8,6 +8,7 @@ import CulturalVideo from '../../components/CulturalVideo';
 import { getYouTubeId } from '../../utils/youtube';
 import { ErrorState, LoadingState, RecipeDetailSkeleton } from '../../components/ui/States';
 import CookMode from '../../components/CookMode';
+import FavoriteButton from '../../components/FavoriteButton';
 import { savedStepKey } from '../../utils/cookMode';
 import './RecipeDetailPage.css';
 
@@ -327,6 +328,7 @@ const RecipeDetailPage: React.FC = () => {
             )}
           </ul>
           <div className="recipe-actions">
+            <FavoriteButton recipeId={recipe._id} recipeName={title || 'this recipe'} />
             <button type="button" className="btn btn--icon" aria-label="Share recipe" onClick={shareRecipe}>
               <i className="bi bi-share" aria-hidden="true"></i>
             </button>

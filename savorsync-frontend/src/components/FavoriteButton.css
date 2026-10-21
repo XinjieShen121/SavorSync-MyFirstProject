@@ -1,0 +1,33 @@
+/* Heart button (design.md 4.1 Icon) */
+.favorite-btn {
+  border-radius: var(--radius-pill);
+}
+
+.favorite-btn[aria-pressed='true'] {
+  color: var(--color-brand-700);
+}
+
+.favorite-btn--overlay {
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: var(--shadow-1);
+  color: var(--color-text);
+}
+
+.favorite-btn--overlay:hover:not(:disabled) {
+  background: var(--color-surface);
+}
+
+.favorite-btn:focus-visible {
+  outline: 3px solid var(--color-brand-700);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .favorite-btn[aria-pressed='true'] .bi {
+    animation: favorite-pop var(--duration-base) var(--ease-standard);
+  }
+}
+
+@keyframes favorite-pop {
+  50% { transform: scale(1.2); }
+}

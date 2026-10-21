@@ -118,10 +118,6 @@ const AllRecipesPage: React.FC = () => {
     navigate('/');
   };
 
-  const handleRecipeClick = (recipeId: string) => {
-    navigate(`/recipe/${recipeId}`);
-  };
-
   // Search from the home page hero (?q=): match name, cuisine, tags or ingredients
   const visibleRecipes = query
     ? recipes.filter((recipe) => {
@@ -230,9 +226,7 @@ const AllRecipesPage: React.FC = () => {
           {visibleRecipes.map((recipe) => (
             <RecipeCard
               key={recipe._id}
-              recipe={recipe}
-              onClick={() => handleRecipeClick(recipe._id)}
-            />
+              recipe={recipe} />
           ))}
         </div>
         )}
