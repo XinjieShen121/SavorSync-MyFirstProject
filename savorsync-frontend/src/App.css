@@ -1,8 +1,8 @@
 /* Global Styles */
 body {
-  font-family: 'Poppins', sans-serif;
-  background-color: #FBE7D2;
-  color: #5D4037;
+  font-family: var(--font-body);
+  background-color: var(--color-bg);
+  color: var(--color-text);
   margin: 0;
   padding: 0;
   display: flex;
@@ -30,9 +30,9 @@ body {
 
 .greeting {
   position: relative;
-  font-family: 'Playfair Display', serif;
+  font-family: var(--font-display);
   opacity: 0.6;
-  color: rgb(233, 186, 151);
+  color: var(--color-brand-800);
   font-size: 1.5rem;
   font-weight: 500;
   animation: fadeInRotate 1s ease-out forwards;
@@ -58,16 +58,16 @@ body {
 
 /* Typography Enhancements */
 h1, h2, h3, h4, h5, h6 {
-  font-family: 'Playfair Display', serif;
+  font-family: var(--font-display);
   font-weight: 700;
   letter-spacing: -0.02em;
 }
 
 .main-heading {
-  font-family: 'Playfair Display', serif;
+  font-family: var(--font-display);
   font-size: 3.5rem;
   font-weight: 800;
-  color: rgb(233, 186, 151);
+  color: var(--color-brand-800);
   margin: 2rem 0 1rem 0;
   line-height: 1.2;
   letter-spacing: -0.03em;
@@ -79,13 +79,13 @@ h1, h2, h3, h4, h5, h6 {
   text-align: left;
   white-space: nowrap;
   padding-right: 1rem;
-  font-family: 'Quicksand', sans-serif;
+  font-family: var(--font-body);
   font-size: 2.2rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: rgb(255, 156, 91);
-  background: linear-gradient(to right, rgb(255, 156, 91) 0%, rgb(255, 156, 91) 100%);
+  color: var(--color-brand-700);
+  background: var(--color-brand-700);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -99,7 +99,7 @@ h1, h2, h3, h4, h5, h6 {
 
 .logo:hover {
   transform: scale(1.05);
-  background: linear-gradient(to right, rgb(255, 156, 91) 0%, rgb(233, 186, 151) 100%);
+  background: var(--color-brand-700);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -119,9 +119,9 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .nav-links a {
-  font-family: 'Quicksand', sans-serif;
+  font-family: var(--font-body);
   text-decoration: none;
-  color: #333;
+  color: var(--color-text);
   font-weight: 500;
   transition: all 0.3s ease;
   position: relative;
@@ -132,7 +132,7 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .nav-links a:hover {
-  color: rgb(255, 156, 91);
+  color: var(--color-brand-700);
 }
 
 .nav-links a::after {
@@ -142,7 +142,7 @@ h1, h2, h3, h4, h5, h6 {
   left: 50%;
   width: 0;
   height: 2px;
-  background-color: rgb(255, 156, 91);
+  background-color: var(--color-brand-700);
   transition: all 0.3s ease;
   transform: translateX(-50%);
 }
@@ -166,7 +166,7 @@ h1, h2, h3, h4, h5, h6 {
   border: none;
   font-size: 1.4rem;
   cursor: pointer;
-  color: #666;
+  color: var(--color-text-secondary);
   transition: color 0.3s ease, transform 0.2s ease;
   padding: 0.5rem;
   display: flex;
@@ -175,7 +175,7 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .icon-button:hover {
-  color: rgb(233, 186, 151);
+  color: var(--color-brand-800);
   transform: scale(1.1);
 }
 
@@ -199,10 +199,10 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .main-heading {
-  font-family: 'Playfair Display', serif;
+  font-family: var(--font-display);
   font-size: 3.5rem;
   font-weight: 800;
-  color: rgb(233, 186, 151);
+  color: var(--color-brand-800);
   margin: 2rem 0 1rem 0;
   line-height: 1.2;
   letter-spacing: -0.03em;
@@ -210,8 +210,8 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .start-cooking-btn {
-  background-color: rgb(255, 156, 91);
-  color: white;
+  background-color: var(--color-brand-700);
+  color: var(--color-text-inverse);
   border: none;
   padding: 1rem 2rem;
   border-radius: 50px;
@@ -244,10 +244,10 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .cuisine-card {
-  background: white;
+  background: var(--color-surface);
   border-radius: 15px;
   overflow: hidden;
-  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+  box-shadow: var(--shadow-2);
   transition: transform 0.2s;
 }
 
@@ -264,7 +264,7 @@ h1, h2, h3, h4, h5, h6 {
 .cuisine-card h3 {
   padding: 1rem;
   margin: 0;
-  color: #333;
+  color: var(--color-text);
   font-weight: 500;
 }
 
@@ -274,12 +274,12 @@ h1, h2, h3, h4, h5, h6 {
   justify-content: center;
   align-items: center;
   min-height: 100vh;
-  background-color: #FBE7D2;
+  background-color: var(--color-surface-warm);
 }
 
 .hello-world-text {
   font-size: 3.5rem;
-  color: rgb(233, 186, 151);
+  color: var(--color-brand-800);
   text-align: center;
   animation: fadeIn 1s ease-in;
 }
@@ -310,15 +310,15 @@ h1, h2, h3, h4, h5, h6 {
   gap: 0.5rem;
   border: none;
   background: transparent;
-  color: rgb(233, 186, 151);
-  font-family: 'Quicksand', sans-serif;
+  color: var(--color-brand-800);
+  font-family: var(--font-body);
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
 }
 
 .back-button:hover {
-  color: rgb(255, 156, 91);
+  color: var(--color-brand-700);
   transform: translateX(-5px);
 }
 
@@ -330,10 +330,10 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .recipe-detail-card {
-  background: white;
+  background: var(--color-surface);
   border-radius: 15px;
   padding: 2rem;
-  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+  box-shadow: var(--shadow-2);
   transition: transform 0.2s;
 }
 
@@ -342,19 +342,19 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .recipe-detail-card h3 {
-  font-family: 'Playfair Display', serif;
+  font-family: var(--font-display);
   font-size: 2rem;
   font-weight: 700;
-  color: rgb(233, 186, 151);
+  color: var(--color-brand-800);
   margin-bottom: 1rem;
   line-height: 1.3;
 }
 
 .recipe-detail-card p {
-  font-family: 'Poppins', sans-serif;
+  font-family: var(--font-body);
   font-size: 1.1rem;
   line-height: 1.6;
-  color: #666;
+  color: var(--color-text-secondary);
   margin-bottom: 1.5rem;
 }
 
@@ -367,10 +367,10 @@ h1, h2, h3, h4, h5, h6 {
 
 .ingredients-section,
 .instructions-section {
-  background: #fff;
+  background: var(--color-surface);
   padding: 1.5rem;
   border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-2);
 }
 
 .ingredients-list {
@@ -404,7 +404,7 @@ h1, h2, h3, h4, h5, h6 {
 .swap-ingredient-btn {
   background: none;
   border: none;
-  color: #666;
+  color: var(--color-text-secondary);
   cursor: pointer;
   padding: 4px 8px;
   border-radius: 4px;
@@ -416,16 +416,16 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .swap-ingredient-btn:hover {
-  color: rgb(255, 156, 91);
+  color: var(--color-brand-700);
   transform: scale(1.1);
 }
 
 .swap-ingredient-btn.swapped {
-  color: rgb(255, 156, 91);
+  color: var(--color-brand-700);
 }
 
 .swap-ingredient-btn.swapped:hover {
-  color: #666;
+  color: var(--color-text-secondary);
 }
 
 .swap-ingredient-btn i {
@@ -438,7 +438,7 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .checkbox-container:hover {
-  background-color: rgba(233, 186, 151, 0.1);
+  background-color: var(--color-brand-50);
 }
 
 .checkbox-container input {
@@ -453,20 +453,20 @@ h1, h2, h3, h4, h5, h6 {
   position: relative;
   height: 24px;
   width: 24px;
-  background-color: #fff;
-  border: 2px solid rgb(233, 186, 151);
+  background-color: var(--color-surface);
+  border: 2px solid var(--color-border);
   border-radius: 4px;
   margin-right: 12px;
   transition: all 0.2s;
 }
 
 .checkbox-container:hover input ~ .checkmark {
-  border-color: rgb(255, 156, 91);
+  border-color: var(--color-brand-500);
 }
 
 .checkbox-container input:checked ~ .checkmark {
-  background-color: rgb(255, 156, 91);
-  border-color: rgb(255, 156, 91);
+  background-color: var(--color-brand-700);
+  border-color: var(--color-brand-500);
 }
 
 .checkmark:after {
@@ -477,7 +477,7 @@ h1, h2, h3, h4, h5, h6 {
   top: 4px;
   width: 5px;
   height: 10px;
-  border: solid white;
+  border: solid var(--color-surface);
   border-width: 0 2px 2px 0;
   transform: rotate(45deg);
 }
@@ -487,10 +487,10 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .ingredient-text {
-  font-family: 'Poppins', sans-serif;
+  font-family: var(--font-body);
   font-size: 1.1rem;
   font-weight: 500;
-  color: #333;
+  color: var(--color-text);
   transition: all 0.3s ease;
   display: flex;
   align-items: center;
@@ -498,25 +498,25 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .ingredient-text.swapped {
-  color: rgb(255, 156, 91);
+  color: var(--color-brand-700);
   transform: scale(1.02);
 }
 
 .ingredient-text.swapped::after {
   content: '(swapped)';
   font-size: 0.8rem;
-  color: #666;
+  color: var(--color-text-secondary);
   font-style: italic;
 }
 
 .ingredient-text.authentic::after {
   content: '★';
-  color: rgb(255, 156, 91);
+  color: var(--color-brand-700);
   font-size: 0.9rem;
 }
 
 .ingredient-text.checked {
-  color: #888;
+  color: var(--color-text-muted);
   text-decoration: line-through;
 }
 
@@ -530,28 +530,28 @@ h1, h2, h3, h4, h5, h6 {
 
 .step-button {
   padding: 0.5rem 1rem;
-  border: 2px solid rgb(233, 186, 151);
+  border: 2px solid var(--color-border);
   border-radius: 20px;
-  background: #fff;
+  background: var(--color-surface);
   cursor: pointer;
   transition: all 0.2s;
   font-size: 0.9rem;
-  color: rgb(233, 186, 151);
+  color: var(--color-brand-800);
 }
 
 .step-button:hover {
-  border-color: rgb(255, 156, 91);
-  color: rgb(255, 156, 91);
+  border-color: var(--color-brand-500);
+  color: var(--color-brand-700);
 }
 
 .step-button.active {
-  background: rgb(255, 156, 91);
-  border-color: rgb(255, 156, 91);
-  color: white;
+  background: var(--color-brand-700);
+  border-color: var(--color-brand-500);
+  color: var(--color-text-inverse);
 }
 
 .current-step {
-  background: rgba(233, 186, 151, 0.1);
+  background: var(--color-brand-50);
   padding: 1.5rem;
   border-radius: 8px;
 }
@@ -561,18 +561,18 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .step-content h5 {
-  font-family: 'Playfair Display', serif;
+  font-family: var(--font-display);
   font-size: 1.3rem;
   font-weight: 600;
-  color: rgb(255, 156, 91);
+  color: var(--color-brand-700);
   margin-bottom: 0.8rem;
 }
 
 .step-content p {
-  font-family: 'Poppins', sans-serif;
+  font-family: var(--font-body);
   font-size: 1.1rem;
   line-height: 1.6;
-  color: #444;
+  color: var(--color-text);
 }
 
 .step-navigation-buttons {
@@ -588,19 +588,19 @@ h1, h2, h3, h4, h5, h6 {
   padding: 0.75rem 1.5rem;
   border: none;
   border-radius: 25px;
-  background: rgb(255, 156, 91);
-  color: white;
+  background: var(--color-brand-700);
+  color: var(--color-text-inverse);
   cursor: pointer;
   transition: all 0.2s;
 }
 
 .nav-button:hover:not(:disabled) {
-  background: rgb(233, 186, 151);
+  background: var(--color-surface-warm);
   transform: translateY(-1px);
 }
 
 .nav-button:disabled {
-  background: #ccc;
+  background: var(--color-surface-sunken);
   cursor: not-allowed;
 }
 
@@ -639,10 +639,10 @@ h1, h2, h3, h4, h5, h6 {
 
 .mode-button {
   padding: 0.8rem 1.5rem;
-  border: 2px solid rgb(233, 186, 151);
+  border: 2px solid var(--color-border);
   border-radius: 25px;
-  background: white;
-  color: rgb(233, 186, 151);
+  background: var(--color-surface);
+  color: var(--color-brand-800);
   cursor: pointer;
   transition: all 0.3s ease;
   font-weight: 500;
@@ -650,30 +650,30 @@ h1, h2, h3, h4, h5, h6 {
 
 .mode-button:hover,
 .mode-button.active {
-  background: rgb(233, 186, 151);
-  color: white;
+  background: var(--color-surface-warm);
+  color: var(--color-text-inverse);
 }
 
 /* Cultural Context */
 .cultural-context {
-  background: rgba(233, 186, 151, 0.1);
+  background: var(--color-brand-50);
   padding: 2rem;
   border-radius: 15px;
   margin: 2rem 0;
 }
 
 .cultural-context h4 {
-  font-family: 'Playfair Display', serif;
+  font-family: var(--font-display);
   font-size: 1.8rem;
   font-weight: 700;
-  color: rgb(233, 186, 151);
+  color: var(--color-brand-800);
   margin-bottom: 1rem;
   line-height: 1.3;
 }
 
 .ai-tip-button {
-  background: rgb(255, 156, 91);
-  color: white;
+  background: var(--color-brand-700);
+  color: var(--color-text-inverse);
   border: none;
   padding: 0.8rem 1.5rem;
   border-radius: 25px;
@@ -693,7 +693,7 @@ h1, h2, h3, h4, h5, h6 {
 
 /* Cultural Tips */
 .cultural-tip {
-  background: rgba(233, 186, 151, 0.1);
+  background: var(--color-brand-50);
   padding: 1rem;
   border-radius: 10px;
   margin-top: 0.5rem;
@@ -703,23 +703,23 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .cultural-tip i {
-  color: rgb(233, 186, 151);
+  color: var(--color-brand-800);
   margin-top: 0.2rem;
 }
 
 .cultural-tip p {
-  font-family: 'Poppins', sans-serif;
+  font-family: var(--font-body);
   font-size: 1rem;
   line-height: 1.6;
-  color: #555;
+  color: var(--color-text-secondary);
   font-style: italic;
 }
 
 /* Substitutions */
 .substitute {
-  font-family: 'Poppins', sans-serif;
+  font-family: var(--font-body);
   font-size: 0.95rem;
-  color: rgb(255, 156, 91);
+  color: var(--color-brand-700);
   margin-top: 0.3rem;
   font-style: italic;
   font-weight: 500;
@@ -733,7 +733,7 @@ h1, h2, h3, h4, h5, h6 {
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
+  background-color: var(--color-overlay);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -742,7 +742,7 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .quick-start-content {
-  background-color: white;
+  background-color: var(--color-surface);
   padding: 30px;
   border-radius: 12px;
   width: 90%;
@@ -754,7 +754,7 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .quick-start-content h2 {
-  color: #333;
+  color: var(--color-text);
   font-size: 24px;
   margin-bottom: 20px;
   text-align: center;
@@ -770,12 +770,12 @@ h1, h2, h3, h4, h5, h6 {
   border: none;
   font-size: 24px;
   cursor: pointer;
-  color: #666;
+  color: var(--color-text-secondary);
   z-index: 1001;
 }
 
 .close-button:hover {
-  color: #333;
+  color: var(--color-text);
 }
 
 /* Search Page Styles */
@@ -793,9 +793,9 @@ h1, h2, h3, h4, h5, h6 {
 
 /* Ensure body styles don't affect search page */
 body {
-  font-family: 'Poppins', sans-serif;
-  background-color: #FBE7D2;
-  color: #5D4037;
+  font-family: var(--font-body);
+  background-color: var(--color-bg);
+  color: var(--color-text);
   margin: 0;
   padding: 0;
   min-height: 100vh;
@@ -810,8 +810,8 @@ body {
   justify-content: space-between;
   align-items: center;
   padding: 0.8rem 2rem;
-  background-color: white;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  background-color: var(--color-surface);
+  box-shadow: var(--shadow-1);
   position: relative;
   width: 1200px;
   min-width: 1200px;
@@ -826,13 +826,13 @@ body {
   text-align: left;
   white-space: nowrap;
   padding-right: 1rem;
-  font-family: 'Quicksand', sans-serif;
+  font-family: var(--font-body);
   font-size: 2.2rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: rgb(255, 156, 91);
-  background: linear-gradient(to right, rgb(255, 156, 91) 0%, rgb(255, 156, 91) 100%);
+  color: var(--color-brand-700);
+  background: var(--color-brand-700);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -858,7 +858,6 @@ body {
 .app {
   width: 100%;
   max-width: 1200px;
-  min-width: 1200px;
   margin: 0 auto;
   padding: 20px 0 0 0;
   display: flex;
@@ -870,10 +869,11 @@ body {
 
 /* Main Content Container */
 .main-content {
-  width: 1200px;
-  min-width: 1200px;
+  width: 100%;
+  max-width: 1200px;
   margin: 0 auto;
   padding: 20px;
+  box-sizing: border-box;
   position: relative;
   z-index: 1;
 }
@@ -885,9 +885,9 @@ body {
 }
 
 .search-header h2 {
-  font-family: 'Playfair Display', serif;
+  font-family: var(--font-display);
   font-size: 3rem;
-  color: rgb(233, 186, 151);
+  color: var(--color-brand-800);
   margin-bottom: 1.5rem;
 }
 
@@ -903,18 +903,18 @@ body {
 .search-input {
   width: 100%;
   padding: 1.5rem 4rem 1.5rem 2rem;
-  border: 3px solid rgb(233, 186, 151);
+  border: 3px solid var(--color-border);
   border-radius: 30px;
   font-size: 1.3rem;
   outline: none;
   transition: all 0.3s ease;
-  background: white;
-  box-shadow: 0 4px 12px rgba(233, 186, 151, 0.1);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-2);
 }
 
 .search-input:focus {
-  border-color: rgb(255, 156, 91);
-  box-shadow: 0 4px 15px rgba(255, 156, 91, 0.2);
+  border-color: var(--color-brand-500);
+  box-shadow: var(--shadow-2);
   transform: translateY(-2px);
 }
 
@@ -923,8 +923,8 @@ body {
   right: 12px;
   top: 50%;
   transform: translateY(-50%);
-  background: rgb(255, 156, 91);
-  color: white;
+  background: var(--color-brand-700);
+  color: var(--color-text-inverse);
   border: none;
   width: 50px;
   height: 50px;
@@ -939,14 +939,14 @@ body {
 
 .search-button:hover {
   transform: translateY(-50%) scale(1.05);
-  background: rgb(233, 186, 151);
-  box-shadow: 0 4px 12px rgba(233, 186, 151, 0.3);
+  background: var(--color-surface-warm);
+  box-shadow: var(--shadow-2);
 }
 
 /* No Results Message */
 .no-results {
   text-align: center;
-  color: #666;
+  color: var(--color-text-secondary);
   margin: 2rem 0;
   font-size: 1.1rem;
 }
@@ -962,9 +962,9 @@ body {
 }
 
 .cuisine-header h2 {
-  font-family: 'Playfair Display', serif;
+  font-family: var(--font-display);
   font-size: 2rem;
-  color: rgb(233, 186, 151);
+  color: var(--color-brand-800);
   margin-bottom: 0.5rem;
 }
 
@@ -973,7 +973,7 @@ body {
 }
 
 .cuisine-header p {
-  color: #666;
+  color: var(--color-text-secondary);
   font-size: 1.2rem;
   max-width: 600px;
   margin: 0 auto;
@@ -987,10 +987,10 @@ body {
 }
 
 .dish-card {
-  background: white;
+  background: var(--color-surface);
   border-radius: 15px;
   overflow: hidden;
-  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+  box-shadow: var(--shadow-2);
   transition: transform 0.2s;
   cursor: pointer;
 }
@@ -1010,19 +1010,19 @@ body {
 }
 
 .dish-info h3 {
-  font-family: 'Playfair Display', serif;
+  font-family: var(--font-display);
   font-size: 1.5rem;
   font-weight: 700;
-  color: rgb(233, 186, 151);
+  color: var(--color-brand-800);
   margin-bottom: 0.8rem;
   line-height: 1.3;
 }
 
 .dish-info p {
-  font-family: 'Poppins', sans-serif;
+  font-family: var(--font-body);
   font-size: 1rem;
   line-height: 1.6;
-  color: #666;
+  color: var(--color-text-secondary);
   margin-bottom: 1rem;
 }
 
@@ -1033,11 +1033,11 @@ body {
 }
 
 .dish-tag {
-  font-family: 'Quicksand', sans-serif;
+  font-family: var(--font-body);
   font-weight: 600;
   font-size: 0.9rem;
-  background: rgba(233, 186, 151, 0.1);
-  color: rgb(233, 186, 151);
+  background: var(--color-brand-50);
+  color: var(--color-brand-800);
   padding: 0.4rem 1rem;
   border-radius: 15px;
 }
@@ -1047,7 +1047,7 @@ body {
   margin: 2rem 0;
   border-radius: 15px;
   overflow: hidden;
-  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+  box-shadow: var(--shadow-2);
 }
 
 .recipe-video iframe {
@@ -1059,7 +1059,7 @@ body {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  color: rgb(233, 186, 151);
+  color: var(--color-brand-800);
   margin-top: 1rem;
   font-size: 0.9rem;
 }
@@ -1078,7 +1078,7 @@ body {
 
 .loading-spinner i {
   font-size: 2rem;
-  color: rgb(233, 186, 151);
+  color: var(--color-brand-800);
   animation: spin 1s linear infinite;
 }
 
@@ -1095,7 +1095,7 @@ body {
 
 .dish-card:hover {
   transform: translateY(-5px);
-  box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+  box-shadow: var(--shadow-2);
 }
 
 /* Modal Animation */
@@ -1217,7 +1217,7 @@ body {
 
 .dish-tag:hover {
   transform: translateY(-2px);
-  background: rgba(233, 186, 151, 0.2);
+  background: var(--color-brand-50);
 }
 
 /* AI Tip Button Animation */
@@ -1227,7 +1227,7 @@ body {
 
 .ai-tip-button:hover {
   transform: scale(1.05) translateY(-2px);
-  box-shadow: 0 4px 12px rgba(233, 186, 151, 0.2);
+  box-shadow: var(--shadow-2);
 }
 
 /* Cuisine Card Animation */
@@ -1238,7 +1238,7 @@ body {
 
 .cuisine-card:hover {
   transform: translateY(-5px) scale(1.02);
-  box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+  box-shadow: var(--shadow-3);
 }
 
 /* Quick Start Modal */
@@ -1248,7 +1248,7 @@ body {
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
+  background-color: var(--color-overlay);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -1257,7 +1257,7 @@ body {
 }
 
 .quick-start-content {
-  background-color: white;
+  background-color: var(--color-surface);
   padding: 30px;
   border-radius: 12px;
   width: 90%;
@@ -1269,7 +1269,7 @@ body {
 }
 
 .quick-start-content h2 {
-  color: #333;
+  color: var(--color-text);
   font-size: 24px;
   margin-bottom: 20px;
   text-align: center;
@@ -1285,12 +1285,12 @@ body {
   border: none;
   font-size: 24px;
   cursor: pointer;
-  color: #666;
+  color: var(--color-text-secondary);
   z-index: 1001;
 }
 
 .close-button:hover {
-  color: #333;
+  color: var(--color-text);
 }
 
 /* Mood Selector */
@@ -1307,10 +1307,10 @@ body {
   align-items: center;
   gap: 0.3rem;
   padding: 0.8rem;
-  border: 2px solid rgb(233, 186, 151);
+  border: 2px solid var(--color-border);
   border-radius: 12px;
-  background: white;
-  color: rgb(233, 186, 151);
+  background: var(--color-surface);
+  color: var(--color-brand-800);
   cursor: pointer;
   transition: all 0.3s ease;
 }
@@ -1320,15 +1320,15 @@ body {
 }
 
 .mood-button span {
-  font-family: 'Quicksand', sans-serif;
+  font-family: var(--font-body);
   font-weight: 600;
   font-size: 0.85rem;
 }
 
 .mood-button:hover,
 .mood-button.active {
-  background: rgb(233, 186, 151);
-  color: white;
+  background: var(--color-surface-warm);
+  color: var(--color-text-inverse);
   transform: translateY(-2px);
 }
 
@@ -1342,21 +1342,21 @@ body {
 
 .time-button {
   padding: 0.6rem;
-  border: 2px solid rgb(233, 186, 151);
+  border: 2px solid var(--color-border);
   border-radius: 12px;
-  background: white;
-  color: rgb(233, 186, 151);
+  background: var(--color-surface);
+  color: var(--color-brand-800);
   font-size: 0.8rem;
   cursor: pointer;
   transition: all 0.3s ease;
-  font-family: 'Quicksand', sans-serif;
+  font-family: var(--font-body);
   font-weight: 600;
 }
 
 /* Find Recipes Button */
 .find-recipes-button {
-  background: rgb(255, 156, 91);
-  color: white;
+  background: var(--color-brand-700);
+  color: var(--color-text-inverse);
   border: none;
   padding: 0.7rem;
   border-radius: 12px;
@@ -1364,12 +1364,12 @@ body {
   cursor: pointer;
   width: 100%;
   transition: all 0.3s ease;
-  font-family: 'Quicksand', sans-serif;
+  font-family: var(--font-body);
   font-weight: 600;
 }
 
 .find-recipes-button:hover {
-  background: rgb(233, 186, 151);
+  background: var(--color-surface-warm);
   transform: translateY(-2px);
 }
 
@@ -1377,8 +1377,8 @@ body {
 .start-cooking-btn {
   position: relative;
   overflow: hidden;
-  background: linear-gradient(45deg, rgb(255, 156, 91), rgb(233, 186, 151));
-  box-shadow: 0 4px 15px rgba(255, 156, 91, 0.2);
+  background: var(--color-brand-700);
+  box-shadow: var(--shadow-2);
 }
 
 .start-cooking-btn::before {
@@ -1403,7 +1403,7 @@ body {
 
 .start-cooking-btn:hover {
   transform: scale(1.05);
-  box-shadow: 0 6px 20px rgba(255, 156, 91, 0.3);
+  box-shadow: var(--shadow-3);
 }
 
 /* Trending Recipes Section */
@@ -1419,10 +1419,10 @@ body {
 }
 
 .trending-card {
-  background: white;
+  background: var(--color-surface);
   border-radius: 12px;
   overflow: hidden;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-2);
   transition: transform 0.3s ease;
 }
 
@@ -1441,7 +1441,7 @@ body {
 }
 
 .cuisine-tag {
-  color: rgb(255, 156, 91);
+  color: var(--color-brand-700);
   font-weight: 500;
   margin: 0.5rem 0;
 }
@@ -1450,7 +1450,7 @@ body {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  color: #666;
+  color: var(--color-text-secondary);
   margin-top: 1rem;
 }
 
@@ -1467,10 +1467,10 @@ body {
 }
 
 .story-card {
-  background: white;
+  background: var(--color-surface);
   border-radius: 12px;
   overflow: hidden;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-2);
 }
 
 .story-card img {
@@ -1484,23 +1484,23 @@ body {
 }
 
 .story-content h3 {
-  font-family: 'Playfair Display', serif;
+  font-family: var(--font-display);
   font-size: 1.8rem;
   font-weight: 700;
-  color: #333;
+  color: var(--color-text);
   margin-bottom: 1rem;
   line-height: 1.3;
 }
 
 .story-content p {
-  font-family: 'Poppins', sans-serif;
+  font-family: var(--font-body);
   font-size: 1.1rem;
   line-height: 1.6;
-  color: #555;
+  color: var(--color-text-secondary);
 }
 
 .read-time {
-  color: #666;
+  color: var(--color-text-secondary);
   font-size: 0.9rem;
 }
 
@@ -1510,26 +1510,26 @@ body {
 }
 
 .post-form {
-  background: white;
+  background: var(--color-surface);
   padding: 1.5rem;
   border-radius: 12px;
   margin-bottom: 2rem;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-1);
 }
 
 .post-form textarea {
   width: 100%;
   min-height: 100px;
   padding: 1rem;
-  border: 1px solid #ddd;
+  border: 1px solid var(--color-border);
   border-radius: 8px;
   margin-bottom: 1rem;
   resize: vertical;
 }
 
 .post-button {
-  background: rgb(255, 156, 91);
-  color: white;
+  background: var(--color-brand-700);
+  color: var(--color-text-inverse);
   border: none;
   padding: 0.8rem 1.5rem;
   border-radius: 8px;
@@ -1538,7 +1538,7 @@ body {
 }
 
 .post-button:hover {
-  background: rgb(233, 186, 151);
+  background: var(--color-surface-warm);
 }
 
 .posts-grid {
@@ -1547,10 +1547,10 @@ body {
 }
 
 .post-card {
-  background: white;
+  background: var(--color-surface);
   border-radius: 12px;
   padding: 1.5rem;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-1);
 }
 
 .post-header {
@@ -1567,7 +1567,7 @@ body {
 }
 
 .username {
-  font-family: 'Quicksand', sans-serif;
+  font-family: var(--font-body);
   font-weight: 600;
   font-size: 1.1rem;
 }
@@ -1592,13 +1592,13 @@ body {
   gap: 0.5rem;
   background: none;
   border: none;
-  color: #666;
+  color: var(--color-text-secondary);
   cursor: pointer;
   transition: color 0.3s ease;
 }
 
 .action-button:hover {
-  color: rgb(255, 156, 91);
+  color: var(--color-brand-700);
 }
 
 /* Sign In Section */
@@ -1608,14 +1608,14 @@ body {
   align-items: center;
   min-height: calc(100vh - 200px);
   padding: 2rem;
-  background: linear-gradient(135deg, rgba(255, 156, 91, 0.1) 0%, rgba(233, 186, 151, 0.1) 100%);
+  background: var(--color-brand-50);
 }
 
 .signin-container {
-  background: white;
+  background: var(--color-surface);
   padding: 2rem;
   border-radius: 12px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-2);
   width: 100%;
   max-width: 400px;
 }
@@ -1633,21 +1633,21 @@ body {
 }
 
 .form-group label {
-  font-family: 'Quicksand', sans-serif;
+  font-family: var(--font-body);
   font-weight: 600;
   font-size: 1rem;
 }
 
 .form-group input {
   padding: 0.8rem;
-  border: 1px solid #ddd;
+  border: 1px solid var(--color-border);
   border-radius: 8px;
   font-size: 1rem;
 }
 
 .signin-button {
-  background: rgb(255, 156, 91);
-  color: white;
+  background: var(--color-brand-700);
+  color: var(--color-text-inverse);
   border: none;
   padding: 1rem;
   border-radius: 8px;
@@ -1657,7 +1657,7 @@ body {
 }
 
 .signin-button:hover {
-  background: rgb(233, 186, 151);
+  background: var(--color-surface-warm);
 }
 
 .social-signin {
@@ -1678,15 +1678,15 @@ body {
   justify-content: center;
   gap: 0.5rem;
   padding: 0.8rem;
-  border: 1px solid #ddd;
+  border: 1px solid var(--color-border);
   border-radius: 8px;
-  background: white;
+  background: var(--color-surface);
   cursor: pointer;
   transition: all 0.3s ease;
 }
 
 .social-button:hover {
-  background: #f5f5f5;
+  background: var(--color-surface-sunken);
 }
 
 .social-button.google {
@@ -1703,7 +1703,7 @@ body {
 }
 
 .signup-link a {
-  color: rgb(255, 156, 91);
+  color: var(--color-brand-700);
   text-decoration: none;
 }
 
@@ -1729,7 +1729,7 @@ body {
 
 /* Icon Navigation Styles */
 .icon-button.active {
-  color: rgb(255, 156, 91);
+  color: var(--color-brand-700);
   transform: scale(1.1);
 }
 
@@ -1746,10 +1746,10 @@ body {
 }
 
 .favorite-card {
-  background: white;
+  background: var(--color-surface);
   border-radius: 12px;
   overflow: hidden;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-2);
   transition: transform 0.3s ease;
 }
 
@@ -1778,10 +1778,10 @@ body {
 }
 
 .search-result-card {
-  background: white;
+  background: var(--color-surface);
   border-radius: 12px;
   overflow: hidden;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-2);
   transition: transform 0.3s ease;
 }
 
@@ -1816,7 +1816,7 @@ body {
   height: 150px;
   border-radius: 50%;
   margin-bottom: 1rem;
-  border: 4px solid rgb(255, 156, 91);
+  border: 4px solid var(--color-brand-500);
 }
 
 .profile-stats {
@@ -1827,16 +1827,16 @@ body {
 }
 
 .stat-item {
-  background: white;
+  background: var(--color-surface);
   padding: 1.5rem;
   border-radius: 12px;
   text-align: center;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-1);
 }
 
 .stat-item i {
   font-size: 2rem;
-  color: rgb(255, 156, 91);
+  color: var(--color-brand-700);
   margin-bottom: 0.5rem;
 }
 
@@ -1847,10 +1847,10 @@ body {
 }
 
 .profile-section {
-  background: white;
+  background: var(--color-surface);
   padding: 1.5rem;
   border-radius: 12px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-1);
 }
 
 .activity-list {
@@ -1864,17 +1864,17 @@ body {
   align-items: center;
   gap: 1rem;
   padding: 1rem;
-  background: rgba(255, 156, 91, 0.1);
+  background: var(--color-brand-50);
   border-radius: 8px;
 }
 
 .activity-item i {
-  color: rgb(255, 156, 91);
+  color: var(--color-brand-700);
   font-size: 1.2rem;
 }
 
 .activity-item small {
-  color: #666;
+  color: var(--color-text-secondary);
   margin-left: auto;
 }
 
@@ -1895,7 +1895,7 @@ body {
   position: relative;
   width: 100%;
   height: 200px;
-  background: #000;
+  background: var(--color-text);
   border-radius: 12px 12px 0 0;
   overflow: hidden;
 }
@@ -1910,7 +1910,7 @@ body {
   position: relative;
   width: 100%;
   height: 200px;
-  background: #000;
+  background: var(--color-text);
   border-radius: 12px 12px 0 0;
   overflow: hidden;
 }
@@ -1932,14 +1932,14 @@ body {
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  background: rgba(0, 0, 0, 0.3);
-  color: white;
+  background: var(--color-overlay);
+  color: var(--color-text-inverse);
   gap: 0.5rem;
 }
 
 .play-overlay i {
   font-size: 3rem;
-  color: rgb(255, 156, 91);
+  color: var(--color-brand-700);
 }
 
 .play-overlay span {
@@ -1953,14 +1953,14 @@ body {
   align-items: center;
   margin-top: 1rem;
   padding-top: 1rem;
-  border-top: 1px solid #eee;
+  border-top: 1px solid var(--color-border);
 }
 
 .video-badge {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  color: rgb(255, 156, 91);
+  color: var(--color-brand-700);
   font-weight: 500;
   font-size: 0.9rem;
 }
@@ -2030,26 +2030,26 @@ body {
 
 .country-filter-btn {
   padding: 0.8rem 1.5rem;
-  border: 2px solid rgb(233, 186, 151);
+  border: 2px solid var(--color-border);
   border-radius: 25px;
-  background: white;
-  color: rgb(233, 186, 151);
+  background: var(--color-surface);
+  color: var(--color-brand-800);
   cursor: pointer;
   transition: all 0.3s ease;
-  font-family: 'Quicksand', sans-serif;
+  font-family: var(--font-body);
   font-weight: 600;
   font-size: 1rem;
 }
 
 .country-filter-btn:hover {
-  background: rgba(233, 186, 151, 0.1);
+  background: var(--color-brand-50);
   transform: translateY(-2px);
 }
 
 .country-filter-btn.active {
-  background: rgb(233, 186, 151);
-  color: white;
-  box-shadow: 0 4px 12px rgba(233, 186, 151, 0.2);
+  background: var(--color-surface-warm);
+  color: var(--color-text-inverse);
+  box-shadow: var(--shadow-2);
 }
 
 /* Responsive Design for Filters */
@@ -2082,13 +2082,13 @@ body {
 .region-button {
   width: 100%;
   padding: 0.8rem;
-  border: 2px solid rgb(233, 186, 151);
+  border: 2px solid var(--color-border);
   border-radius: 12px;
-  background: white;
-  color: rgb(233, 186, 151);
+  background: var(--color-surface);
+  color: var(--color-brand-800);
   cursor: pointer;
   transition: all 0.3s ease;
-  font-family: 'Quicksand', sans-serif;
+  font-family: var(--font-body);
   font-weight: 600;
   font-size: 0.85rem;
   display: flex;
@@ -2104,20 +2104,20 @@ body {
 }
 
 .region-button span {
-  font-family: 'Quicksand', sans-serif;
+  font-family: var(--font-body);
   font-weight: 600;
   font-size: 0.85rem;
 }
 
 .region-button:hover {
-  background: rgb(233, 186, 151);
-  color: white;
+  background: var(--color-surface-warm);
+  color: var(--color-text-inverse);
   transform: translateY(-2px);
 }
 
 .region-button.active {
-  background: rgb(233, 186, 151);
-  color: white;
+  background: var(--color-surface-warm);
+  color: var(--color-text-inverse);
 }
 
 .country-list {
@@ -2125,9 +2125,9 @@ body {
   top: 100%;
   left: 0;
   width: 100%;
-  background: white;
+  background: var(--color-surface);
   border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-2);
   max-height: 150px;
   overflow-y: auto;
   z-index: 1002;
@@ -2139,22 +2139,22 @@ body {
   padding: 0.6rem 0.8rem;
   border: none;
   background: transparent;
-  color: #666;
+  color: var(--color-text-secondary);
   font-size: 0.85rem;
   text-align: left;
   cursor: pointer;
   transition: all 0.2s ease;
-  font-family: 'Quicksand', sans-serif;
+  font-family: var(--font-body);
 }
 
 .country-button:hover {
-  background: rgba(233, 186, 151, 0.1);
-  color: rgb(233, 186, 151);
+  background: var(--color-brand-50);
+  color: var(--color-brand-800);
 }
 
 .country-button.active {
-  background: rgb(233, 186, 151);
-  color: white;
+  background: var(--color-surface-warm);
+  color: var(--color-text-inverse);
 }
 
 /* Others Dropdown */
@@ -2167,13 +2167,13 @@ body {
 .others-button {
   width: 100%;
   padding: 0.6rem;
-  border: 2px solid rgb(233, 186, 151);
+  border: 2px solid var(--color-border);
   border-radius: 12px;
-  background: white;
-  color: rgb(233, 186, 151);
+  background: var(--color-surface);
+  color: var(--color-brand-800);
   cursor: pointer;
   transition: all 0.3s ease;
-  font-family: 'Quicksand', sans-serif;
+  font-family: var(--font-body);
   font-weight: 600;
   font-size: 0.85rem;
   display: flex;
@@ -2183,14 +2183,14 @@ body {
 }
 
 .others-button:hover {
-  background: rgb(233, 186, 151);
-  color: white;
+  background: var(--color-surface-warm);
+  color: var(--color-text-inverse);
   transform: translateY(-2px);
 }
 
 .others-button.active {
-  background: rgb(233, 186, 151);
-  color: white;
+  background: var(--color-surface-warm);
+  color: var(--color-text-inverse);
 }
 
 .others-list {
@@ -2198,9 +2198,9 @@ body {
   top: 100%;
   left: 0;
   width: 100%;
-  background: white;
+  background: var(--color-surface);
   border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-2);
   max-height: 200px;
   overflow-y: auto;
   z-index: 1002;
@@ -2213,30 +2213,30 @@ body {
   padding: 0.6rem 0.8rem;
   border: none;
   background: transparent;
-  color: #666;
+  color: var(--color-text-secondary);
   font-size: 0.85rem;
   text-align: left;
   cursor: pointer;
   transition: all 0.2s ease;
-  font-family: 'Quicksand', sans-serif;
+  font-family: var(--font-body);
   border-radius: 6px;
 }
 
 .cuisine-button:hover {
-  background: rgba(233, 186, 151, 0.1);
-  color: rgb(233, 186, 151);
+  background: var(--color-brand-50);
+  color: var(--color-brand-800);
 }
 
 .cuisine-button.active {
-  background: rgb(233, 186, 151);
-  color: white;
+  background: var(--color-surface-warm);
+  color: var(--color-text-inverse);
 }
 
 .cultural-story-video {
   margin: 20px 0;
   border-radius: 12px;
   overflow: hidden;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-2);
 }
 
 .cultural-story-video iframe {
@@ -2248,8 +2248,8 @@ body {
   padding: 12px;
   text-align: center;
   font-style: italic;
-  color: #666;
-  background-color: #f8f9fa;
+  color: var(--color-text-secondary);
+  background-color: var(--color-surface-sunken);
   margin: 0;
   border-bottom-left-radius: 12px;
   border-bottom-right-radius: 12px;
@@ -2271,7 +2271,7 @@ body {
 }
 
 .ingredient-text.swapped {
-  color: rgb(255, 156, 91);
+  color: var(--color-brand-700);
   transform: scale(1.02);
 }
 
@@ -2288,8 +2288,8 @@ body {
 /* Tooltip styles */
 .ingredient-tooltip {
   position: absolute;
-  background: rgba(0, 0, 0, 0.8);
-  color: white;
+  background: var(--color-overlay);
+  color: var(--color-text-inverse);
   padding: 8px 12px;
   border-radius: 6px;
   font-size: 0.9rem;
@@ -2328,27 +2328,27 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #f0f0f0;
-  color: #666;
+  background: var(--color-surface-sunken);
+  color: var(--color-text-secondary);
   font-weight: 600;
   transition: all 0.3s ease;
 }
 
 .step-indicator.active {
-  background: rgb(255, 156, 91);
-  color: white;
+  background: var(--color-brand-700);
+  color: var(--color-text-inverse);
   transform: scale(1.1);
 }
 
 .step-indicator.completed {
-  background: #4CAF50;
-  color: white;
+  background: var(--color-success);
+  color: var(--color-text-inverse);
 }
 
 .step-line {
   flex: 1;
   height: 2px;
-  background: #f0f0f0;
+  background: var(--color-surface-sunken);
   position: relative;
   overflow: hidden;
 }
@@ -2359,7 +2359,7 @@ body {
   left: 0;
   top: 0;
   height: 100%;
-  background: rgb(255, 156, 91);
+  background: var(--color-brand-700);
   transition: width 0.3s ease;
 }
 
@@ -2370,7 +2370,7 @@ body {
 .step-completion {
   margin-top: 20px;
   padding: 15px;
-  background: rgba(255, 156, 91, 0.1);
+  background: var(--color-brand-50);
   border-radius: 8px;
   display: flex;
   align-items: center;
@@ -2379,13 +2379,13 @@ body {
 }
 
 .step-completion i {
-  color: rgb(255, 156, 91);
+  color: var(--color-brand-700);
   font-size: 24px;
 }
 
 .step-completion p {
   margin: 0;
-  color: #333;
+  color: var(--color-text);
   font-size: 1.1rem;
   font-weight: 500;
 }
@@ -2410,16 +2410,16 @@ body {
 }
 
 .dish-card.shimmer {
-  background: white;
+  background: var(--color-surface);
   border-radius: 15px;
   overflow: hidden;
-  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+  box-shadow: var(--shadow-2);
 }
 
 .shimmer-image {
   width: 100%;
   height: 200px;
-  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background: linear-gradient(90deg, var(--color-surface-sunken) 25%, var(--color-surface-sunken) 50%, var(--color-surface-sunken) 75%);
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite;
 }
@@ -2431,7 +2431,7 @@ body {
 .shimmer-title {
   height: 24px;
   width: 80%;
-  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background: linear-gradient(90deg, var(--color-surface-sunken) 25%, var(--color-surface-sunken) 50%, var(--color-surface-sunken) 75%);
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite;
   margin-bottom: 1rem;
@@ -2441,7 +2441,7 @@ body {
 .shimmer-text {
   height: 16px;
   width: 100%;
-  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background: linear-gradient(90deg, var(--color-surface-sunken) 25%, var(--color-surface-sunken) 50%, var(--color-surface-sunken) 75%);
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite;
   border-radius: 4px;
@@ -2490,16 +2490,16 @@ body {
 
 /* Cultural Music Section */
 .cultural-music-section {
-  background: rgba(233, 186, 151, 0.1);
+  background: var(--color-brand-50);
   padding: 2rem;
   border-radius: 15px;
   margin: 2rem 0;
 }
 
 .cultural-music-section h4 {
-  font-family: 'Playfair Display', serif;
+  font-family: var(--font-display);
   font-size: 1.8rem;
-  color: rgb(233, 186, 151);
+  color: var(--color-brand-800);
   margin-bottom: 1rem;
   display: flex;
   align-items: center;
@@ -2507,10 +2507,10 @@ body {
 }
 
 .cultural-music-section .music-description {
-  font-family: 'Poppins', sans-serif;
+  font-family: var(--font-body);
   font-size: 1.1rem;
   line-height: 1.6;
-  color: #666;
+  color: var(--color-text-secondary);
   margin-bottom: 1.5rem;
   font-style: italic;
 }
@@ -2519,20 +2519,20 @@ body {
   margin: 2rem 0;
   border-radius: 12px;
   overflow: hidden;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-2);
 }
 
 .music-tips {
-  background: white;
+  background: var(--color-surface);
   padding: 1.5rem;
   border-radius: 10px;
   margin-top: 2rem;
 }
 
 .music-tips h5 {
-  font-family: 'Playfair Display', serif;
+  font-family: var(--font-display);
   font-size: 1.3rem;
-  color: rgb(233, 186, 151);
+  color: var(--color-brand-800);
   margin-bottom: 1rem;
 }
 
@@ -2542,9 +2542,9 @@ body {
 }
 
 .music-tips li {
-  font-family: 'Poppins', sans-serif;
+  font-family: var(--font-body);
   padding: 0.5rem 0;
-  color: #555;
+  color: var(--color-text-secondary);
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -2552,7 +2552,7 @@ body {
 
 .music-tips li::before {
   content: '♪';
-  color: rgb(233, 186, 151);
+  color: var(--color-brand-800);
   font-size: 1.2rem;
 }
 
@@ -2569,4 +2569,8 @@ body {
   .music-player iframe {
     height: 300px;
   }
+}
+/* Let the app fill the window so the shared nav spans the full width */
+#root {
+  width: 100%;
 }

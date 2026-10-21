@@ -52,6 +52,16 @@ SavorSync is my answer:
 - Comment, like, and get inspired by fellow food enthusiasts from around the world
 - Build connections through shared culinary adventures
 
+### 🍳 **Cook with AI**
+- Tell SavorSync what's in your kitchen and AI writes a recipe around it, with its cultural story
+- Pick a cuisine, a diet and a time limit; save the recipes you like to your profile
+
+### 🛒 **Kitchen Tools**
+- Save favorites with the heart on any recipe
+- Scale servings and switch between US and metric units
+- Add a recipe's ingredients to a shopping list, then tick them off as you shop
+- "I made this" reviews with star ratings, notes and photos; Trending ranks dishes by saves and reviews
+
 ---
 
 ## 🧪 The HCI Design Process
@@ -135,6 +145,11 @@ CLOUDINARY_CLOUD_NAME=your-cloudinary-name
 CLOUDINARY_API_KEY=your-cloudinary-key
 CLOUDINARY_API_SECRET=your-cloudinary-secret
 OPENAI_API_KEY=your-openai-api-key
+# Optional: the chat model for cultural Q&A (defaults to gpt-4o-mini)
+OPENAI_MODEL=gpt-4o-mini
+# For "Cook with music" playlists (Spotify developer dashboard, no user login needed)
+SPOTIFY_CLIENT_ID=your-spotify-client-id
+SPOTIFY_CLIENT_SECRET=your-spotify-client-secret
 NODE_ENV=development
 ```
 
@@ -157,8 +172,7 @@ npm run dev
 
 - **Mobile App** for cooking on the go
 - **Voice-Guided Cooking** for hands-free recipe navigation
-- **Meal Planning** with shopping list generation
-- **Recipe Rating System** with community reviews
+- **Meal Planning** across the week
 - **Advanced AI Cooking Assistant** for personalized recommendations
 
 ---

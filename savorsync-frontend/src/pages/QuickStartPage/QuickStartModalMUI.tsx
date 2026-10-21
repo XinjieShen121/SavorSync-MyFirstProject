@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useToast } from '../../context/ToastContext';
 import { useNavigate } from 'react-router-dom';
 import {
   Dialog,
@@ -40,6 +41,7 @@ interface QuickStartModalProps {
 }
 
 const QuickStartModal: React.FC<QuickStartModalProps> = ({ isOpen, onClose }) => {
+  const { showToast } = useToast();
   const navigate = useNavigate();
   const [selections, setSelections] = useState<QuickStartSelections>({
     mood: null,
@@ -123,7 +125,7 @@ const QuickStartModal: React.FC<QuickStartModalProps> = ({ isOpen, onClose }) =>
 
   const handleFindRecipes = async () => {
     if (!selections.cuisine) {
-      alert('Please select a cuisine first!');
+      showToast('Please select a cuisine first!', 'info');
       return;
     }
 

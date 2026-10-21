@@ -16,6 +16,9 @@ const userRoutes = require('./routes/users');
 const communityRoutes = require('./routes/community');
 const profileUploadRoutes = require('./routes/profileUpload');
 const culturalRoutes = require('./routes/cultural');
+const musicRoutes = require('./routes/music');
+const substitutionRoutes = require('./routes/substitutions');
+const reviewRoutes = require('./routes/reviews');
 
 const app = express();
 
@@ -51,6 +54,9 @@ app.use('/api/users', userRoutes);
 app.use('/api/community', communityRoutes);
 app.use('/api/profile-upload', profileUploadRoutes);
 app.use('/api/cultural', culturalRoutes);
+app.use('/api/music', musicRoutes);
+app.use('/api/substitutions', substitutionRoutes);
+app.use('/api/reviews', reviewRoutes);
 
 // Root route
 app.get('/', (req, res) => {

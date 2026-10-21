@@ -1,7 +1,8 @@
 import axios from 'axios';
+import { API_BASE_URL } from './config';
 
 const recipeAPI = axios.create({
-  baseURL: (import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001/api') + '/recipes',
+  baseURL: API_BASE_URL + '/recipes',
   headers: {
     'Content-Type': 'application/json',
   },
@@ -45,15 +46,6 @@ export const searchRecipes = async (query: string) => {
   return res.data;
 };
 
-export const generateRecipe = async (recipe_name: string, cuisine: string) => {
-  const res = await recipeAPI.post('/generate', {
-    recipe_name,
-    cuisine,
-    save_to_database: true,
-  });
-  return res.data;
-};
-
 // New functions for All Recipes page
 export const getAllCuisines = async () => {
   const res = await recipeAPI.get('/cuisines');
@@ -78,3 +70,8 @@ export const getRecipes = async () => {
 };
 
 export default recipeAPI; 
+// Trending: ranked by favorites and recent reviews, topped up with featured dishes
+export const getTrendingRecipes = async (limit = 12) => {
+  const res = await recipeAPI.get('/trending', { params: { limit } });
+  return res.data.recipes;
+};

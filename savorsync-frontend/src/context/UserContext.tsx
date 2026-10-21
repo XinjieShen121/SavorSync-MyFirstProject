@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { authAPI, userProfileAPI } from '../services/apiUser';
 import { userSocialAPI } from '../services/apiCommunity';
+import { addFavorite, removeFavorite } from '../services/apiFavorites';
 
 interface User {
   id: string;
@@ -23,7 +24,8 @@ interface UserContextType {
   register: (name: string, email: string, password: string) => Promise<boolean>;
   logout: () => void;
   updateUser: (updates: Partial<User>) => Promise<void>;
-  addToFavorites: (recipeName: string) => Promise<void>;
+  isFavorite: (recipeId: string) => boolean;
+  toggleFavorite: (recipeId: string) => Promise<void>;
   saveRecipe: (recipeName: string) => Promise<void>;
   // Social features
   toggleFollow: (userId: string) => Promise<void>;
@@ -151,20 +153,30 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
     }
   };
 
-  const addToFavorites = async (recipeName: string): Promise<void> => {
+  const isFavorite = (recipeId: string) => !!user?.favorites?.includes(recipeId);
+
+  // Flip the heart right away, then sync with the server and roll back if it fails
+  const toggleFavorite = async (recipeId: string): Promise<void> => {
+    if (!user) return;
+    const wasFavorite = isFavorite(recipeId);
+    const previous = user.favorites || [];
+    const optimistic = wasFavorite ? previous.filter(id => id !== recipeId) : [...previous, recipeId];
+    const applyFavorites = (favorites: string[]) => {
+      setUser(current => {
+        if (!current) return current;
+        const updated = { ...current, favorites };
+        localStorage.setItem('user', JSON.stringify(updated));
+        return updated;
+      });
+    };
+
+    applyFavorites(optimistic);
     try {
-      setLoading(true);
-      const response = await userProfileAPI.addToFavorites(recipeName);
-      
-      // Update local storage and state
-      const updatedUser = { ...user, ...response.user };
-      localStorage.setItem('user', JSON.stringify(updatedUser));
-      setUser(updatedUser);
+      const favorites = wasFavorite ? await removeFavorite(recipeId) : await addFavorite(recipeId);
+      applyFavorites(favorites);
     } catch (error) {
-      console.error('Add to favorites error:', error);
+      applyFavorites(previous);
       throw error;
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -223,7 +235,8 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
     register,
     logout,
     updateUser,
-    addToFavorites,
+    isFavorite,
+    toggleFavorite,
     saveRecipe,
     toggleFollow,
     getUserProfile,
