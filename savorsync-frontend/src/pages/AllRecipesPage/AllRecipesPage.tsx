@@ -1,252 +1,247 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
-import { getAllCuisines, getRecipesWithFilter, getAllRecipes } from '../../services/apiRecipe';
-import RecipeCard from '../../components/RecipeCard';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
+import { getAllRecipes } from '../../services/apiRecipe';
+import RecipeCard, { RecipeCardRecipe } from '../../components/RecipeCard';
 import { EmptyState, ErrorState, LoadingState, RecipeGridSkeleton } from '../../components/ui/States';
+import {
+  Diet, DIET_LABELS, recipeDiets, normalizeDifficulty, TimeBucket, TIME_LABELS, timeBucket,
+} from '../../utils/recipeFacts';
 import '../../styles/shared-layout.css';
-import './AllRecipesPage.css';
+import '../../styles/browse.css';
 
+interface BrowseRecipe extends RecipeCardRecipe {
+  ingredients?: string[];
+}
 
+const PAGE_SIZE = 24;
+const DIFFICULTIES = ['Easy', 'Medium', 'Hard'];
+const DIETS = Object.keys(DIET_LABELS) as Diet[];
+const TIMES = Object.keys(TIME_LABELS) as TimeBucket[];
 
+const matchesQuery = (recipe: BrowseRecipe, query: string) => {
+  const needle = query.toLowerCase();
+  return [recipe.recipe_name, recipe.title, recipe.cuisine, ...(recipe.tags || []), ...(recipe.ingredients || [])]
+    .some(field => typeof field === 'string' && field.toLowerCase().includes(needle));
+};
+
+// All recipes (design.md 5.3): search, filter bar, result count, card grid, Load more.
+// Every filter lives in the URL so a filtered list can be shared or bookmarked.
 const AllRecipesPage: React.FC = () => {
-  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const query = (searchParams.get('q') || '').trim();
-  const [recipes, setRecipes] = useState<any[]>([]);
-  const [cuisines, setCuisines] = useState<string[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [selectedCuisine, setSelectedCuisine] = useState<string>('all');
-  const [currentPage, setCurrentPage] = useState(1);
-  const [hasMore, setHasMore] = useState(true);
-  const [reloadKey, setReloadKey] = useState(0);
+  const cuisine = searchParams.get('cuisine') || '';
+  const diet = searchParams.get('diet') || '';
+  const difficulty = searchParams.get('difficulty') || '';
+  const time = searchParams.get('time') || '';
 
-  // Fetch cuisines and initial recipes
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        setError(null);
+  const [recipes, setRecipes] = useState<BrowseRecipe[]>([]);
+  const [state, setState] = useState<'loading' | 'error' | 'ready'>('loading');
+  const [searchText, setSearchText] = useState(query);
+  const [shown, setShown] = useState(PAGE_SIZE);
 
-        // Fetch all cuisines
-        console.log('🔍 Fetching cuisines...');
-        const cuisinesData = await getAllCuisines();
-        console.log('🌍 Available cuisines:', cuisinesData);
-        setCuisines(cuisinesData);
+  const load = useCallback(async () => {
+    setState('loading');
+    try {
+      setRecipes(await getAllRecipes());
+      setState('ready');
+    } catch {
+      setState('error');
+    }
+  }, []);
 
-        // Fetch initial recipes
-        console.log('🍽️ Fetching initial recipes...');
-        const recipesData = await getAllRecipes();
-        console.log(`📊 Initial recipes: ${recipesData.length} recipes loaded`);
-        console.log('📊 First few recipes:', recipesData.slice(0, 3).map((r: any) => r.recipe_name));
-        setRecipes(recipesData);
-        setHasMore(false); // No pagination needed since we're loading all recipes
+  useEffect(() => { load(); }, [load]);
+  useEffect(() => { setSearchText(query); }, [query]);
+  useEffect(() => { setShown(PAGE_SIZE); }, [query, cuisine, diet, difficulty, time]);
 
-      } catch (err: any) {
-        console.error('❌ Error fetching data:', err);
-        setError(err.message || 'Failed to fetch recipes');
-      } finally {
-        setLoading(false);
-      }
+  const setParam = (key: string, value: string) => {
+    const next = new URLSearchParams(searchParams);
+    if (value) next.set(key, value); else next.delete(key);
+    setSearchParams(next, { replace: true });
+  };
+
+  const toggleParam = (key: string, value: string, current: string) => setParam(key, current === value ? '' : value);
+
+  const submitSearch = (event: React.FormEvent) => {
+    event.preventDefault();
+    setParam('q', searchText.trim());
+  };
+
+  const clearAll = () => {
+    setSearchText('');
+    setSearchParams({}, { replace: true });
+  };
+
+  // Only offer a chip when at least one recipe has it (design.md 4.2)
+  const options = useMemo(() => {
+    const cuisineCounts = new Map<string, number>();
+    const diets = new Set<Diet>();
+    const difficulties = new Set<string>();
+    const times = new Set<TimeBucket>();
+    recipes.forEach(recipe => {
+      if (recipe.cuisine) cuisineCounts.set(recipe.cuisine, (cuisineCounts.get(recipe.cuisine) || 0) + 1);
+      recipeDiets(recipe).forEach(d => diets.add(d));
+      const level = normalizeDifficulty(recipe.difficulty);
+      if (level) difficulties.add(level);
+      const bucket = timeBucket(recipe);
+      if (bucket) times.add(bucket);
+    });
+    return {
+      cuisines: [...cuisineCounts.entries()].sort((a, b) => b[1] - a[1]).map(([name]) => name),
+      diets: DIETS.filter(d => diets.has(d)),
+      difficulties: DIFFICULTIES.filter(d => difficulties.has(d)),
+      times: TIMES.filter(t => times.has(t)),
     };
+  }, [recipes]);
 
-    fetchData();
-  }, [reloadKey]);
+  const results = useMemo(() => recipes.filter(recipe =>
+    (!query || matchesQuery(recipe, query)) &&
+    (!cuisine || recipe.cuisine === cuisine) &&
+    (!diet || recipeDiets(recipe).includes(diet as Diet)) &&
+    (!difficulty || normalizeDifficulty(recipe.difficulty) === difficulty) &&
+    (!time || timeBucket(recipe) === time)
+  ), [recipes, query, cuisine, diet, difficulty, time]);
 
-  const retry = () => {
-    if (selectedCuisine === 'all') setReloadKey((k) => k + 1);
-    else handleCuisineFilter(selectedCuisine);
-  };
+  const activeFilters = [cuisine, diet, difficulty, time].filter(Boolean).length + (query ? 1 : 0);
 
-  // Handle cuisine filter change
-  const handleCuisineFilter = async (cuisine: string) => {
-    try {
-      setLoading(true);
-      setError(null);
-      setSelectedCuisine(cuisine);
-      setCurrentPage(1);
-
-      console.log(`🔍 Filtering recipes by cuisine: ${cuisine}`);
-      
-      if (cuisine === 'all') {
-        // Load all recipes when "all" is selected
-        const data = await getAllRecipes();
-        console.log(`📊 Found ${data.length} total recipes for "all" cuisine`);
-        console.log('📊 First few recipes:', data.slice(0, 3).map((r: any) => r.recipe_name));
-        setRecipes(data);
-        setHasMore(false);
-      } else {
-        // Use filtered API for specific cuisines
-        const data = await getRecipesWithFilter(cuisine, 1, 50); // Increased limit for filtered results
-        console.log(`📊 Found ${data.recipes.length} recipes for ${cuisine}`);
-        console.log('📊 First few recipes:', data.recipes.slice(0, 3).map((r: any) => r.recipe_name));
-        setRecipes(data.recipes);
-        setHasMore(data.pagination.hasMore);
-      }
-    } catch (err: any) {
-      console.error('❌ Error filtering recipes:', err);
-      setError(err.message || 'Failed to filter recipes');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Load more recipes
-  const loadMoreRecipes = async () => {
-    try {
-      const nextPage = currentPage + 1;
-      console.log(`📄 Loading page ${nextPage} for cuisine: ${selectedCuisine}`);
-      
-      if (selectedCuisine === 'all') {
-        // For "all" cuisine, we already have all recipes loaded
-        console.log('📄 All recipes already loaded, no more to load');
-        setHasMore(false);
-        return;
-      }
-      
-      const data = await getRecipesWithFilter(selectedCuisine, nextPage, 50); // Increased limit
-      setRecipes(prev => [...prev, ...data.recipes]);
-      setCurrentPage(nextPage);
-      setHasMore(data.pagination.hasMore);
-    } catch (err: any) {
-      console.error('❌ Error loading more recipes:', err);
-      setError(err.message || 'Failed to load more recipes');
-    }
-  };
-
-  const handleBackToHome = () => {
-    navigate('/');
-  };
-
-  // Search from the home page hero (?q=): match name, cuisine, tags or ingredients
-  const visibleRecipes = query
-    ? recipes.filter((recipe) => {
-        const needle = query.toLowerCase();
-        const haystack = [
-          recipe.recipe_name,
-          recipe.title,
-          recipe.cuisine,
-          ...(Array.isArray(recipe.tags) ? recipe.tags : []),
-          ...(Array.isArray(recipe.ingredients) ? recipe.ingredients : []),
-        ];
-        return haystack.some((field) => typeof field === 'string' && field.toLowerCase().includes(needle));
-      })
-    : recipes;
-
-  const clearSearch = () => setSearchParams({});
-
-  // First load: skeleton grid or a full-page error (design.md 4.7)
-  if ((loading || error) && recipes.length === 0 && cuisines.length === 0) {
-    return (
-      <div className="recipe-page-container">
-        <div className="recipe-page-wrapper">
-          <h1 className="recipe-page-title">All Recipes</h1>
-          {error ? (
-            <ErrorState onRetry={retry} exit={{ label: 'Back to home', to: '/' }} />
-          ) : (
-            <LoadingState label="Loading recipes">
-              <RecipeGridSkeleton />
-            </LoadingState>
-          )}
-        </div>
-      </div>
-    );
-  }
+  const chip = (key: string, value: string, label: string, current: string) => (
+    <button
+      key={value}
+      type="button"
+      className="chip"
+      aria-pressed={current === value}
+      onClick={() => toggleParam(key, value, current)}
+    >
+      {current === value && <i className="bi bi-check" aria-hidden="true"></i>}
+      {label}
+    </button>
+  );
 
   return (
-    <div className="recipe-page-container">
-      <div className="recipe-page-wrapper">
-        {/* Header */}
-        <div className="recipe-page-header">
-          <button className="recipe-page-back-button" onClick={handleBackToHome}>
-            ← Back to Home
-          </button>
-          <h1 className="recipe-page-title">All Recipes</h1>
-          <p className="recipe-page-subtitle">
-            {query
-              ? `${visibleRecipes.length} ${visibleRecipes.length === 1 ? 'recipe matches' : 'recipes match'} "${query}"`
-              : `Discover ${recipes.length} delicious recipes from around the world`}
-          </p>
-        </div>
+    <div className="browse">
+      <div className="browse__inner">
+        <Link to="/" className="btn btn--ghost btn--sm browse__back">
+          <i className="bi bi-arrow-left" aria-hidden="true"></i>
+          Home
+        </Link>
+        <header className="browse__header">
+          <h1 className="browse__title">All recipes</h1>
+          <p className="browse__lead">Dishes from around the world, each with the story behind it.</p>
+        </header>
 
-        {/* Cuisine Filters */}
-        <div className="recipe-page-filters">
-          <div className="filters-header">
-            <h3>Filter by Cuisine</h3>
-            <span className="recipe-count">
-              {visibleRecipes.length} {selectedCuisine === 'all' ? 'total' : selectedCuisine} recipes
-            </span>
+        <form className="browse__search" role="search" onSubmit={submitSearch}>
+          <i className="bi bi-search browse__search-icon" aria-hidden="true"></i>
+          <label htmlFor="browse-search" className="visually-hidden">Search recipes</label>
+          <input
+            id="browse-search"
+            type="search"
+            className="browse__search-input"
+            placeholder="Search a dish, ingredient or cuisine"
+            value={searchText}
+            onChange={event => setSearchText(event.target.value)}
+          />
+          <button type="submit" className="btn btn--primary browse__search-button">Search</button>
+        </form>
+
+        {state !== 'error' && (
+          <div className="browse__filters" aria-label="Filters">
+            {options.cuisines.length > 0 && (
+              <div className="browse__filter-row" role="group" aria-label="Cuisine">
+                <span className="browse__filter-label">Cuisine</span>
+                <div className="browse__chips">
+                  <button type="button" className="chip" aria-pressed={!cuisine} onClick={() => setParam('cuisine', '')}>
+                    {!cuisine && <i className="bi bi-check" aria-hidden="true"></i>}
+                    All
+                  </button>
+                  {options.cuisines.map(name => chip('cuisine', name, name, cuisine))}
+                </div>
+              </div>
+            )}
+            {options.diets.length > 0 && (
+              <div className="browse__filter-row" role="group" aria-label="Diet">
+                <span className="browse__filter-label">Diet</span>
+                <div className="browse__chips">
+                  {options.diets.map(d => chip('diet', d, DIET_LABELS[d], diet))}
+                </div>
+              </div>
+            )}
+            {options.difficulties.length > 0 && (
+              <div className="browse__filter-row" role="group" aria-label="Difficulty">
+                <span className="browse__filter-label">Difficulty</span>
+                <div className="browse__chips">
+                  {options.difficulties.map(d => chip('difficulty', d, d, difficulty))}
+                </div>
+              </div>
+            )}
+            {options.times.length > 0 && (
+              <div className="browse__filter-row" role="group" aria-label="Total time">
+                <span className="browse__filter-label">Time</span>
+                <div className="browse__chips">
+                  {options.times.map(t => chip('time', t, TIME_LABELS[t], time))}
+                </div>
+              </div>
+            )}
           </div>
-          
-          <div className="filter-buttons">
-            <button
-              className={`filter-btn ${selectedCuisine === 'all' ? 'active' : ''}`}
-              onClick={() => handleCuisineFilter('all')}
-            >
-              All Cuisines
-            </button>
-            
-            {cuisines.map((cuisine) => (
-              <button
-                key={cuisine}
-                className={`filter-btn ${selectedCuisine === cuisine ? 'active' : ''}`}
-                onClick={() => handleCuisineFilter(cuisine)}
-              >
-                {cuisine}
+        )}
+
+        {state === 'ready' && (
+          <div className="browse__count-row">
+            <p className="browse__count" aria-live="polite">
+              {results.length} {results.length === 1 ? 'recipe' : 'recipes'}
+              {query && <> for &ldquo;{query}&rdquo;</>}
+            </p>
+            {activeFilters > 0 && (
+              <button type="button" className="btn btn--ghost btn--sm" onClick={clearAll}>
+                Clear all
               </button>
-            ))}
+            )}
           </div>
-        </div>
+        )}
 
-        {/* Recipe Grid, or the loading / error / empty state for the current filter */}
-        {loading ? (
+        {state === 'loading' && (
           <LoadingState label="Loading recipes">
             <RecipeGridSkeleton />
           </LoadingState>
-        ) : error ? (
-          <ErrorState onRetry={retry} exit={{ label: 'Back to home', to: '/' }} />
-        ) : visibleRecipes.length === 0 ? (
+        )}
+
+        {state === 'error' && <ErrorState onRetry={load} exit={{ label: 'Back to home', to: '/' }} />}
+
+        {state === 'ready' && results.length === 0 && (
           query ? (
             <EmptyState
               icon="bi-search"
               title={`Nothing found for "${query}"`}
-              body="Check the spelling or try a dish name."
-              action={{ label: 'Clear search', onClick: clearSearch, variant: 'ghost' }}
+              body="Check the spelling, try a dish name, or clear the filters."
+              action={{ label: 'Clear search', onClick: clearAll, variant: 'ghost' }}
             />
           ) : (
             <EmptyState
-              icon="bi-search"
-              title="No recipes match"
-              body="Try another cuisine or clear the filters."
-              action={{ label: 'Clear filters', onClick: () => handleCuisineFilter('all'), variant: 'ghost' }}
+              icon="bi-funnel"
+              title="No recipes match these filters"
+              body="Try removing a filter."
+              action={{ label: 'Clear filters', onClick: clearAll, variant: 'ghost' }}
             />
           )
-        ) : (
-        <div className="recipe-page-grid">
-          {visibleRecipes.map((recipe) => (
-            <RecipeCard
-              key={recipe._id}
-              recipe={recipe} />
-          ))}
-        </div>
         )}
 
-        {/* Load More Button */}
-        {hasMore && (
-          <div className="load-more-section">
-            <button 
-              className="load-more-btn"
-              onClick={loadMoreRecipes}
-              disabled={loading}
-            >
-              {loading ? 'Loading...' : 'Load More Recipes'}
-            </button>
-          </div>
+        {state === 'ready' && results.length > 0 && (
+          <>
+            <div className="recipe-page-grid">
+              {results.slice(0, shown).map(recipe => (
+                <RecipeCard key={recipe._id} recipe={recipe} />
+              ))}
+            </div>
+            {shown < results.length && (
+              <div className="browse__more">
+                <button type="button" className="btn btn--secondary" onClick={() => setShown(n => n + PAGE_SIZE)}>
+                  Load more
+                </button>
+              </div>
+            )}
+          </>
         )}
-
       </div>
     </div>
   );
 };
 
-export default AllRecipesPage; 
+export default AllRecipesPage;

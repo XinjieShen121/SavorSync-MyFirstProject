@@ -100,3 +100,16 @@
 }
 .tip-box > .bi { color: var(--color-saffron-700); font-size: 20px; line-height: 1.4; }
 .tip-box p { margin: 0; }
+
+/* Screen-reader-only text */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
