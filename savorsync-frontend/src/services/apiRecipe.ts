@@ -70,3 +70,8 @@ export const getRecipes = async () => {
 };
 
 export default recipeAPI; 
+// Trending: ranked by favorites and recent reviews, topped up with featured dishes
+export const getTrendingRecipes = async (limit = 12) => {
+  const res = await recipeAPI.get('/trending', { params: { limit } });
+  return res.data.recipes;
+};

@@ -7,6 +7,7 @@ const User = require('../models/User');
 const toObjectId = (id) => (ObjectId.isValid(id) ? new ObjectId(id) : null);
 const rateLimit = require('express-rate-limit');
 const { generateRecipe, parseRequest } = require('../config/recipeGenerator');
+const { getTrending } = require('../config/trending');
 
 // AI recipes visitors create stay out of the shared catalogue; they are reachable
 // by link once saved, and from the creator's own "My recipes".
@@ -119,6 +120,17 @@ router.get('/', async (req, res) => {
   } catch (error) {
     console.error('Get all recipes error:', error);
     res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Trending: ranked by favorites and recent reviews (see config/trending.js)
+router.get('/trending', async (req, res) => {
+  try {
+    const limit = Math.min(Math.max(parseInt(req.query.limit, 10) || 12, 1), 24);
+    res.json({ recipes: await getTrending(limit) });
+  } catch (error) {
+    console.error('Get trending error:', error);
+    res.status(500).json({ error: "Couldn't load trending recipes. Please try again." });
   }
 });
 

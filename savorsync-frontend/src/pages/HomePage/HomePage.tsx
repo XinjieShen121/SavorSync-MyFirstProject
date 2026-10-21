@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useUser } from '../../context/UserContext';
-import { getAllRecipes } from '../../services/apiRecipe';
+import { getAllRecipes, getTrendingRecipes } from '../../services/apiRecipe';
 import { getAllPosts } from '../../services/apiPosts';
 import { hasCulturalVideo } from '../../utils/youtube';
 import QuickStartModal from '../QuickStartPage/QuickStartModalMUI';
@@ -86,6 +86,7 @@ const HomePage: React.FC = () => {
   const [query, setQuery] = useState('');
   const [recipes, setRecipes] = useState<HomeRecipe[]>([]);
   const [recipesState, setRecipesState] = useState<LoadState>('loading');
+  const [trendingRecipes, setTrendingRecipes] = useState<HomeRecipe[] | null>(null);
   const [posts, setPosts] = useState<HomePost[]>([]);
   const [postsState, setPostsState] = useState<LoadState>('loading');
 
@@ -101,8 +102,13 @@ const HomePage: React.FC = () => {
   const loadRecipes = useCallback(async () => {
     setRecipesState('loading');
     try {
-      const data = await getAllRecipes();
+      // Trending is a nice-to-have here; if it fails, fall back to the full list
+      const [data, trendingData] = await Promise.all([
+        getAllRecipes(),
+        getTrendingRecipes(4).catch(() => null),
+      ]);
       setRecipes(Array.isArray(data) ? data : []);
+      setTrendingRecipes(Array.isArray(trendingData) ? trendingData : null);
       setRecipesState('ready');
     } catch {
       setRecipesState('error');
@@ -133,8 +139,8 @@ const HomePage: React.FC = () => {
 
   const greeting = greetings[greetingIndex];
   const spotlight = recipesState === 'ready' ? pickDishOfTheDay(recipes) : null;
-  // Same pick as the Trending page until real ranking exists, minus today's dish
-  const trending = recipes.filter(r => r._id !== spotlight?._id).slice(0, 3);
+  // Same ranking as the Trending page, minus today's dish
+  const trending = (trendingRecipes || recipes).filter(r => r._id !== spotlight?._id).slice(0, 3);
   const spotlightStory = spotlight ? spotlight.culturalBackground || spotlight.fun_facts?.[0] : '';
 
   return (
