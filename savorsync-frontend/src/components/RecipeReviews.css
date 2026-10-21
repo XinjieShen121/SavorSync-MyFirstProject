@@ -151,6 +151,7 @@
 }
 
 .reviews__list {
+  align-items: start;
   margin: 0;
   padding: 0;
   list-style: none;

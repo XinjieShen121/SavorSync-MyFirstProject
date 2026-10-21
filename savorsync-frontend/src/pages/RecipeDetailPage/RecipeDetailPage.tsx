@@ -10,6 +10,11 @@ import { ErrorState, InlineError, InlineSpinner, LoadingState, RecipeDetailSkele
 import { getSubstitutions, IngredientSwaps } from '../../services/apiSubstitutions';
 import CookMode from '../../components/CookMode';
 import FavoriteButton from '../../components/FavoriteButton';
+import RecipeReviews, { Stars } from '../../components/RecipeReviews';
+import { useShoppingList } from '../../context/ShoppingListContext';
+import { useToast } from '../../context/ToastContext';
+import { scaleQuantity, convertQuantity, detectSystem, UnitSystem } from '../../utils/quantities';
+import type { ReviewSummary } from '../../services/apiReviews';
 import { savedStepKey } from '../../utils/cookMode';
 import './RecipeDetailPage.css';
 
@@ -89,6 +94,12 @@ const RecipeDetailPage: React.FC = () => {
   const [suggested, setSuggested] = useState<IngredientSwaps[]>([]);
   const [swapsState, setSwapsState] = useState<'loading' | 'error' | 'ready'>('loading');
   const [swapsReloadKey, setSwapsReloadKey] = useState(0);
+  const [servings, setServings] = useState<number | null>(null);
+  const [batch, setBatch] = useState(1);
+  const [units, setUnits] = useState<UnitSystem | null>(null);
+  const [reviewSummary, setReviewSummary] = useState<ReviewSummary | null>(null);
+  const { addRecipe, hasRecipe } = useShoppingList();
+  const { showToast } = useToast();
 
 
   useEffect(() => {
@@ -273,11 +284,31 @@ const RecipeDetailPage: React.FC = () => {
   const prep = recipe.prep_time || recipe.prepTime;
   const cook = recipe.cook_time || recipe.cookTime;
   const swapCount = Object.keys(swaps).length;
+  // Serving scaler and units: scale by servings when the recipe has them,
+  // otherwise by batch size; convert units only when the cook asks for it
+  const baseServings = Number(recipe.servings) > 0 ? Number(recipe.servings) : null;
+  const shownServings = servings ?? baseServings;
+  const factor = baseServings && shownServings ? shownServings / baseServings : batch;
+  const recipeUnits = detectSystem(ingredients.map((ingredient) => parseIngredient(ingredient).quantity));
+  const shownUnits = units ?? recipeUnits;
+  const displayQuantity = (quantity: string) => {
+    const scaled = scaleQuantity(quantity, factor);
+    return shownUnits === recipeUnits ? scaled : convertQuantity(scaled, shownUnits);
+  };
+  const isAdjusted = factor !== 1 || shownUnits !== recipeUnits;
+
   const cookIngredients = ingredients.map((ingredient, index) => {
-    const { name, quantity } = parseIngredient(ingredient);
+    const { name, quantity: rawQuantity } = parseIngredient(ingredient);
+    const quantity = displayQuantity(rawQuantity);
     const swap = swaps[index];
     return swap ? { quantity, name: swap.name, swappedFrom: name } : { quantity, name };
   });
+
+  const addToShoppingList = () => {
+    const label = baseServings && shownServings ? `${title} (${shownServings} servings)` : title || 'Recipe';
+    addRecipe(recipe._id, label, cookIngredients.map(({ quantity, name }) => `${quantity} ${name}`.trim()));
+    showToast(`Added ${cookIngredients.length} ingredients to your shopping list`, 'success');
+  };
   const tips = instructions.map((_, index) => (index === 0 && storyIsFirstFact ? undefined : funFacts[index]));
   const target = swapTarget ? swapOptions[swapTarget.index] : [];
 
@@ -337,6 +368,14 @@ const RecipeDetailPage: React.FC = () => {
             {recipe.difficulty && (
               <li><i className="bi bi-bar-chart" aria-hidden="true"></i>{recipe.difficulty}</li>
             )}
+            {reviewSummary && reviewSummary.count > 0 && reviewSummary.average !== null && (
+              <li>
+                <a href="#reviews" className="recipe-facts__rating">
+                  <Stars value={reviewSummary.average} label={`Rated ${reviewSummary.average} out of 5`} />
+                  {reviewSummary.count} {reviewSummary.count === 1 ? 'review' : 'reviews'}
+                </a>
+              </li>
+            )}
           </ul>
           <div className="recipe-actions">
             <FavoriteButton recipeId={recipe._id} recipeName={title || 'this recipe'} />
@@ -388,6 +427,55 @@ const RecipeDetailPage: React.FC = () => {
           <section className="ingredients" aria-labelledby="ingredients-title">
             <h2 id="ingredients-title" className="recipe-section-title">Ingredients</h2>
 
+            <div className="ingredient-tools">
+              {baseServings ? (
+                <div className="servings-stepper" role="group" aria-label="Servings">
+                  <button
+                    type="button"
+                    className="btn btn--icon btn--sm"
+                    aria-label="Fewer servings"
+                    disabled={(shownServings || 1) <= 1}
+                    onClick={() => setServings(Math.max(1, (shownServings || baseServings) - 1))}
+                  >
+                    <i className="bi bi-dash-lg" aria-hidden="true"></i>
+                  </button>
+                  <span className="servings-stepper__value" aria-live="polite">
+                    {shownServings} {shownServings === 1 ? 'serving' : 'servings'}
+                  </span>
+                  <button
+                    type="button"
+                    className="btn btn--icon btn--sm"
+                    aria-label="More servings"
+                    disabled={(shownServings || 1) >= 24}
+                    onClick={() => setServings(Math.min(24, (shownServings || baseServings) + 1))}
+                  >
+                    <i className="bi bi-plus-lg" aria-hidden="true"></i>
+                  </button>
+                </div>
+              ) : (
+                <div className="ingredient-tools__chips" role="group" aria-label="Batch size">
+                  {[0.5, 1, 2, 3].map((size) => (
+                    <button key={size} type="button" className="chip" aria-pressed={batch === size} onClick={() => setBatch(size)}>
+                      {size === 0.5 ? '½' : size}×
+                    </button>
+                  ))}
+                </div>
+              )}
+              <div className="ingredient-tools__chips" role="group" aria-label="Units">
+                <button type="button" className="chip" aria-pressed={shownUnits === 'us'} onClick={() => setUnits('us')}>US</button>
+                <button type="button" className="chip" aria-pressed={shownUnits === 'metric'} onClick={() => setUnits('metric')}>Metric</button>
+              </div>
+              {isAdjusted && (
+                <button
+                  type="button"
+                  className="btn btn--ghost btn--sm"
+                  onClick={() => { setServings(null); setBatch(1); setUnits(null); }}
+                >
+                  Reset
+                </button>
+              )}
+            </div>
+
             {swapsState === 'loading' && (
               <div className="diet-selector diet-selector--status">
                 <InlineSpinner label="Finding ingredient swaps" />
@@ -436,7 +524,7 @@ const RecipeDetailPage: React.FC = () => {
                         checked={isChecked}
                         onChange={() => setChecked((prev) => ({ ...prev, [index]: !prev[index] }))}
                       />
-                      <span className="ingredient-row__qty">{original.quantity}</span>
+                      <span className="ingredient-row__qty">{displayQuantity(original.quantity)}</span>
                       <span className={`ingredient-row__name ${isChecked ? 'is-checked' : ''}`}>
                         {swap ? swap.name : original.name}
                         {swap && <span className="ingredient-row__instead"> instead of {original.name}</span>}
@@ -463,6 +551,13 @@ const RecipeDetailPage: React.FC = () => {
                 );
               })}
             </ul>
+
+            {ingredients.length > 0 && (
+              <button type="button" className="btn btn--secondary shopping-add" onClick={addToShoppingList}>
+                <i className={`bi ${hasRecipe(recipe._id) ? 'bi-basket-fill' : 'bi-basket'}`} aria-hidden="true"></i>
+                {hasRecipe(recipe._id) ? 'Update shopping list' : 'Add to shopping list'}
+              </button>
+            )}
           </section>
 
           <section className="steps" aria-labelledby="steps-title">
@@ -508,6 +603,10 @@ const RecipeDetailPage: React.FC = () => {
             <CulturalVideo recipe={sectionVideo} />
           </section>
         )}
+
+        <div className="recipe-more">
+          <RecipeReviews recipeId={recipe._id} recipeName={title || 'this dish'} onSummary={setReviewSummary} />
+        </div>
       </div>
 
       {/* 6. Docked Start Cooking button */}

@@ -150,8 +150,18 @@
     order: 3;
     flex-basis: 100%;
     justify-content: flex-start;
-    gap: var(--space-6);
+    gap: var(--space-4);
     overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .site-nav__links::-webkit-scrollbar {
+    display: none;
+  }
+
+  .site-nav__link {
+    white-space: nowrap;
+    flex-shrink: 0;
   }
 }
 

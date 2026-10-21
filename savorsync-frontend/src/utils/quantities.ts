@@ -56,13 +56,10 @@ export const scaleQuantity = (quantity: string, factor: number): string => {
   return `${scaled}${max}${amount.rest}`;
 };
 
-// Unit name -> [system, base unit, amount of base per unit]
+// Unit name -> [system, base unit, amount of base per unit].
+// Spoons are left as they are: cooks use them in both systems.
 const UNITS: [RegExp, UnitSystem, 'ml' | 'g', number][] = [
   [/^(cups?|c)\b/i, 'us', 'ml', 240],
-  [/^(tablespoons?|tbsps?|tbs|T)\b/, 'us', 'ml', 15],
-  [/^(tablespoons?|tbsps?|tbs)\b/i, 'us', 'ml', 15],
-  [/^(teaspoons?|tsps?|t)\b/, 'us', 'ml', 5],
-  [/^(teaspoons?|tsps?)\b/i, 'us', 'ml', 5],
   [/^(fl\.?\s?oz|fluid ounces?)\b/i, 'us', 'ml', 30],
   [/^(pounds?|lbs?)\b/i, 'us', 'g', 454],
   [/^(ounces?|oz)\b/i, 'us', 'g', 28.35],
