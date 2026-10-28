@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import FavoriteButton from './FavoriteButton';
+import TypeCover from './TypeCover';
 import { totalMinutes, formatMinutes, normalizeDifficulty, recipeDiets, DIET_LABELS } from '../utils/recipeFacts';
 import './RecipeCard.css';
 
@@ -9,6 +10,7 @@ export interface RecipeCardRecipe {
   recipe_name?: string;
   title?: string;
   cuisine?: string;
+  region?: string;
   image?: string;
   image_url?: string;
   prep_time?: string;
@@ -42,9 +44,9 @@ const RecipeCard: React.FC<RecipeCardProps> = ({ recipe }) => {
           {image ? (
             <img src={image} alt="" className="recipe-card__image" loading="lazy" />
           ) : (
-            <i className="bi bi-image recipe-card__placeholder" aria-hidden="true"></i>
+            <TypeCover title={recipe.cuisine || name} kicker={recipe.region} region={recipe.region} />
           )}
-          {recipe.cuisine && <span className="badge badge--cuisine recipe-card__cuisine">{recipe.cuisine}</span>}
+          {image && recipe.cuisine && <span className="badge badge--cuisine recipe-card__cuisine">{recipe.cuisine}</span>}
         </div>
         <div className="recipe-card__body">
           <h3 className="recipe-card__title">{name}</h3>
