@@ -7,6 +7,8 @@ const fs = require('fs');
 const path = require('path');
 
 // Upload single image
+const ownerTag = (user) => `user_${user._id}`;
+
 router.post('/image', authenticateToken, upload.single('image'), async (req, res) => {
   try {
     if (!req.file) {
@@ -18,6 +20,8 @@ router.post('/image', authenticateToken, upload.single('image'), async (req, res
     // Upload to Cloudinary
     const result = await cloudinary.uploader.upload(req.file.path, {
       folder: 'savorsync/recipes',
+      // Marks who uploaded it, so only they can delete it later
+      tags: [ownerTag(req.user)],
       transformation: [
         { width: 800, height: 600, crop: 'fill' },
         { quality: 'auto' }
@@ -64,6 +68,8 @@ router.post('/images', authenticateToken, upload.array('images', 5), async (req,
       try {
         const result = await cloudinary.uploader.upload(file.path, {
           folder: 'savorsync/recipes',
+          // Marks who uploaded it, so only they can delete it later
+          tags: [ownerTag(req.user)],
           transformation: [
             { width: 800, height: 600, crop: 'fill' },
             { quality: 'auto' }
@@ -121,6 +127,12 @@ router.post('/images', authenticateToken, upload.array('images', 5), async (req,
 router.delete('/image/:publicId', authenticateToken, async (req, res) => {
   try {
     const { publicId } = req.params;
+
+    // Only the person who uploaded an image may delete it
+    const resource = await cloudinary.api.resource(publicId, { tags: true }).catch(() => null);
+    if (!resource || !(resource.tags || []).includes(ownerTag(req.user))) {
+      return res.status(403).json({ error: 'You can only delete images you uploaded' });
+    }
 
     console.log('🗑️ Deleting image from Cloudinary:', publicId);
 

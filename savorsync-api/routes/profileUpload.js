@@ -77,6 +77,11 @@ router.delete('/profile-image/:publicId', auth, async (req, res) => {
   try {
     const { publicId } = req.params;
 
+    // Profile images are named profile_<user id>_<time>, so a user can only delete their own
+    if (!publicId.replace(/^savorsync-profiles\//, '').startsWith(`profile_${req.user.id}_`)) {
+      return res.status(403).json({ error: 'You can only delete your own profile image' });
+    }
+
     // Delete from Cloudinary
     const result = await cloudinary.uploader.destroy(publicId);
 

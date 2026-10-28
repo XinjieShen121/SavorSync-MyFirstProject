@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useUser } from '../../context/UserContext';
 import './LoginPage.css';
 
@@ -11,7 +11,9 @@ const LoginPage: React.FC = () => {
     password: ''
   });
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [searchParams] = useSearchParams();
+  // Set when a saved login expired and another page sent the person here
+  const [error, setError] = useState(searchParams.get('expired') ? 'Your session expired. Please sign in again.' : '');
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
