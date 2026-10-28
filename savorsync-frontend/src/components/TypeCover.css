@@ -1,0 +1,66 @@
+/* Typeset cover for recipes without a photo */
+.type-cover {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: var(--space-2);
+  padding: var(--space-5);
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.type-cover--warm { background: var(--color-surface-warm); color: var(--color-brand-800); }
+.type-cover--sunken { background: var(--color-surface-sunken); color: var(--color-text); }
+.type-cover--saffron { background: var(--color-saffron-100); color: var(--color-saffron-700); }
+.type-cover--herb { background: var(--color-herb-50); color: var(--color-herb-700); }
+.type-cover--brand { background: var(--color-brand-50); color: var(--color-brand-800); }
+
+.type-cover__kicker {
+  font-size: var(--text-xs);
+  line-height: 16px;
+  font-weight: var(--weight-semibold);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.type-cover__title {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: var(--weight-semibold);
+  font-size: var(--text-h3);
+  line-height: 1.15;
+  text-wrap: balance;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.type-cover__note {
+  position: absolute;
+  top: var(--space-4);
+  right: var(--space-4);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-medium);
+  opacity: 0.85;
+}
+
+.type-cover--card .type-cover__note { display: none; }
+
+.type-cover--hero {
+  padding: var(--space-8);
+}
+
+.type-cover--hero .type-cover__title {
+  font-size: clamp(2.25rem, 5vw, 3.75rem);
+  line-height: 1.05;
+}
+
+@media (max-width: 599px) {
+  .type-cover--hero { padding: var(--space-5); }
+}
