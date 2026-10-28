@@ -8,6 +8,9 @@ if (process.env.OPENAI_API_KEY) {
   });
 }
 
+// gpt-3.5-turbo is retired; override with OPENAI_MODEL if needed
+const CHAT_MODEL = process.env.OPENAI_MODEL || 'gpt-4o-mini';
+
 /**
  * Generate cultural cooking insights for a recipe
  * @param {Object} recipe - Recipe object with name, cuisine, ingredients, etc.
@@ -36,7 +39,7 @@ Please provide:
 Keep the response engaging, informative, and about 200-300 words. Make it feel like a knowledgeable friend sharing fascinating food culture stories.`;
 
     const completion = await openai.chat.completions.create({
-      model: "gpt-3.5-turbo",
+      model: CHAT_MODEL,
       messages: [
         {
           role: "system",
@@ -92,6 +95,59 @@ const getFallbackInsight = (recipe) => {
   return fallbackInsights[cuisine] || `${recipeName} represents a wonderful example of ${recipe.cuisine} cuisine, which has its own unique cultural traditions and cooking techniques that have been passed down through generations. Food is a universal language that connects us to our heritage and brings people together around the table to share stories, traditions, and create lasting memories.`;
 };
 
+// Preset questions for the "Ask about this dish" panel (design.md 4.4)
+const PRESET_QUESTIONS = {
+  story: "What's the story behind this dish?",
+  ingredient: 'Why are the key ingredients in this dish important to its culture?',
+  home: 'How is this dish traditionally served and eaten at home?',
+  occasion: 'When and for which occasions is this dish usually cooked?',
+};
+
+/**
+ * Answer one question about a recipe's culture and history
+ * @param {Object} recipe - Recipe document
+ * @param {string} question - The visitor's question (already length-checked)
+ * @returns {Promise<{answer: string, source: 'ai'|'fallback'}>}
+ */
+const answerCulturalQuestion = async (recipe, question) => {
+  const recipeName = recipe.recipe_name || recipe.title;
+
+  if (!openai) {
+    return { answer: getFallbackInsight(recipe), source: 'fallback' };
+  }
+
+  const completion = await openai.chat.completions.create({
+    model: CHAT_MODEL,
+    messages: [
+      {
+        role: 'system',
+        content: 'You are a warm, knowledgeable food historian for SavorSync, a cooking site about food and culture. ' +
+          'Answer only questions about this dish, its ingredients, its history, the people and places it comes from, and how it is cooked, served and celebrated. ' +
+          'If the question is about anything else, say briefly that you can only talk about this dish and its culture. ' +
+          'Be accurate and respectful, avoid stereotypes, and say when traditions vary by region or family. ' +
+          'Write 2 or 3 short paragraphs, under 180 words, in plain text without markdown or emoji.'
+      },
+      {
+        role: 'user',
+        content: `Dish: ${recipeName}\nCuisine: ${recipe.cuisine || 'Unknown'}\n` +
+          `Ingredients: ${Array.isArray(recipe.ingredients) ? recipe.ingredients.slice(0, 25).join(', ') : 'Not listed'}\n\n` +
+          `Question: ${question}`
+      }
+    ],
+    max_tokens: 400,
+    temperature: 0.6,
+  });
+
+  return { answer: completion.choices[0].message.content.trim(), source: 'ai' };
+};
+
+// Shared with other AI features (ingredient swaps); null when no API key is set
+const getOpenAIClient = () => openai;
+
 module.exports = {
-  generateCulturalInsight
+  getOpenAIClient,
+  CHAT_MODEL,
+  generateCulturalInsight,
+  answerCulturalQuestion,
+  PRESET_QUESTIONS
 }; 

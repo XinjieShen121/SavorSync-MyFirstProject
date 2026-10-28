@@ -415,7 +415,7 @@ const CreatePostPage: React.FC = () => {
             <button
               type="button"
               onClick={handleCancel}
-              className="btn btn-secondary"
+              className="btn btn--secondary"
               disabled={isLoading}
             >
               Cancel
@@ -425,7 +425,7 @@ const CreatePostPage: React.FC = () => {
               <button
                 type="button"
                 onClick={handleDelete}
-                className="btn btn-danger"
+                className="btn btn--danger"
                 disabled={isLoading}
               >
                 <i className="bi bi-trash"></i>
@@ -435,7 +435,7 @@ const CreatePostPage: React.FC = () => {
             
             <button
               type="submit"
-              className="btn btn-primary"
+              className="btn btn--primary"
               disabled={isLoading}
             >
               {isLoading ? (

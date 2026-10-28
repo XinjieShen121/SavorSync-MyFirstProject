@@ -3,6 +3,7 @@ import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useUser } from '../../context/UserContext';
 import { getPost, likePost, unlikePost, addComment, deleteComment, deletePost } from '../../services/apiPosts';
 import './PostDetailPage.css';
+import { EmptyState, ErrorState, LoadingState, PostSkeleton } from '../../components/ui/States';
 
 interface Comment {
   _id: string;
@@ -38,6 +39,7 @@ const PostDetailPage: React.FC = () => {
   const [post, setPost] = useState<Post | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [notFound, setNotFound] = useState(false);
   const [commentContent, setCommentContent] = useState('');
   const [submittingComment, setSubmittingComment] = useState(false);
   const [deletingPost, setDeletingPost] = useState(false);
@@ -52,10 +54,12 @@ const PostDetailPage: React.FC = () => {
     try {
       setLoading(true);
       setError('');
+      setNotFound(false);
       const response = await getPost(postId!);
       setPost(response.data);
     } catch (err: any) {
-      setError('Failed to load post: ' + (err.response?.data?.error || err.message));
+      if (err.response?.status === 404) setNotFound(true);
+      else setError("We couldn't load this");
     } finally {
       setLoading(false);
     }
@@ -158,28 +162,23 @@ const PostDetailPage: React.FC = () => {
 
   const canEditPost = post && user && (post.authorId === user.id);
 
-  if (loading) {
+  // Loading, not-found and error states (design.md 4.7)
+  if (loading || error || notFound || !post) {
     return (
       <div className="post-detail-page">
-        <div className="loading-container">
-          <div className="loading-spinner"></div>
-          <p>Loading post...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (error || !post) {
-    return (
-      <div className="post-detail-page">
-        <div className="error-container">
-          <i className="bi bi-exclamation-triangle"></i>
-          <h3>Post Not Found</h3>
-          <p>{error || 'The post you are looking for does not exist.'}</p>
-          <button onClick={() => navigate('/community')} className="btn btn-primary">
-            Back to Community
-          </button>
-        </div>
+        {loading ? (
+          <LoadingState label="Loading post">
+            <PostSkeleton />
+          </LoadingState>
+        ) : error ? (
+          <ErrorState onRetry={fetchPost} exit={{ label: 'Back to community', to: '/community' }} />
+        ) : (
+          <ErrorState
+            title="This post isn't here"
+            body="It may have been removed. See what others are cooking instead."
+            primary={{ label: 'Back to community', to: '/community', variant: 'primary' }}
+          />
+        )}
       </div>
     );
   }
@@ -197,7 +196,7 @@ const PostDetailPage: React.FC = () => {
             <div className="post-actions">
               <button 
                 onClick={handleEditPost}
-                className="btn btn-secondary"
+                className="btn btn--secondary"
                 disabled={deletingPost}
               >
                 <i className="bi bi-pencil"></i>
@@ -205,7 +204,7 @@ const PostDetailPage: React.FC = () => {
               </button>
               <button 
                 onClick={handleDeletePost}
-                className="btn btn-danger"
+                className="btn btn--danger"
                 disabled={deletingPost}
               >
                 <i className="bi bi-trash"></i>
@@ -288,7 +287,7 @@ const PostDetailPage: React.FC = () => {
                 </span>
                 <button 
                   type="submit" 
-                  className="btn btn-primary"
+                  className="btn btn--primary"
                   disabled={!commentContent.trim() || submittingComment}
                 >
                   {submittingComment ? 'Posting...' : 'Post Comment'}
@@ -303,10 +302,7 @@ const PostDetailPage: React.FC = () => {
 
           <div className="comments-list">
             {post.comments.length === 0 ? (
-              <div className="no-comments">
-                <i className="bi bi-chat-dots"></i>
-                <p>No comments yet. Be the first to share your thoughts!</p>
-              </div>
+              <EmptyState icon="bi-chat" title="No comments yet" body="Be the first to say something." />
             ) : (
               post.comments.map((comment) => (
                 <div key={comment._id} className="comment">

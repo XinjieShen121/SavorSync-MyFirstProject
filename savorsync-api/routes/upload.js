@@ -1,12 +1,13 @@
 const express = require('express');
 const router = express.Router();
 const upload = require('../middleware/upload');
+const { authenticateToken } = require('../middleware/auth');
 const cloudinary = require('../config/cloudinary');
 const fs = require('fs');
 const path = require('path');
 
 // Upload single image
-router.post('/image', upload.single('image'), async (req, res) => {
+router.post('/image', authenticateToken, upload.single('image'), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ error: 'No image file provided' });
@@ -51,7 +52,7 @@ router.post('/image', upload.single('image'), async (req, res) => {
 });
 
 // Upload multiple images
-router.post('/images', upload.array('images', 5), async (req, res) => {
+router.post('/images', authenticateToken, upload.array('images', 5), async (req, res) => {
   try {
     if (!req.files || req.files.length === 0) {
       return res.status(400).json({ error: 'No image files provided' });
@@ -117,7 +118,7 @@ router.post('/images', upload.array('images', 5), async (req, res) => {
 });
 
 // Delete image from Cloudinary
-router.delete('/image/:publicId', async (req, res) => {
+router.delete('/image/:publicId', authenticateToken, async (req, res) => {
   try {
     const { publicId } = req.params;
 

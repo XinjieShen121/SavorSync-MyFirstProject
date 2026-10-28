@@ -1,0 +1,93 @@
+/* Cultural video (design.md 2.8 imagery, 5.1) */
+
+.cultural-video {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  font-family: var(--font-body);
+}
+
+.cultural-video__frame {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  background: var(--color-surface-sunken);
+}
+
+.cultural-video__player,
+.cultural-video__poster {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+
+.cultural-video__poster {
+  padding: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.cultural-video__thumb {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.cultural-video__poster::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(28, 18, 12, 0) 50%, var(--color-overlay) 100%);
+}
+
+.cultural-video__play {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  z-index: 1;
+  width: 72px;
+  height: 72px;
+  transform: translate(-50%, -50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-pill);
+  background: var(--color-brand-700);
+  color: var(--color-text-inverse);
+  font-size: 36px;
+  box-shadow: var(--shadow-3);
+  transition: transform var(--duration-fast) var(--ease-standard), background-color var(--duration-fast) var(--ease-standard);
+}
+
+.cultural-video__poster:hover .cultural-video__play {
+  background: var(--color-brand-800);
+  transform: translate(-50%, -50%) scale(1.05);
+}
+
+.cultural-video__caption {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-4);
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+}
+
+.cultural-video__more {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  min-height: 44px;
+  font-weight: var(--weight-semibold);
+  color: var(--color-brand-800);
+  text-decoration: none;
+}
+
+.cultural-video__more:hover {
+  text-decoration: underline;
+}
