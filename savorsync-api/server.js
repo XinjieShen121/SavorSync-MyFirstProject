@@ -1,4 +1,5 @@
 require("dotenv").config();
+require('./config/env').checkEnv();
 const express = require("express");
 const cors = require("cors");
 const helmet = require("helmet");
@@ -22,6 +23,12 @@ const reviewRoutes = require('./routes/reviews');
 
 const app = express();
 
+// Render's load balancer (and Netlify's /api proxy in front of it) sit between
+// visitors and the API. Trusting those hops makes req.ip the visitor's own
+// address, so each visitor gets their own rate limit instead of sharing one.
+const trustProxyHops = Number(process.env.TRUST_PROXY_HOPS ?? (process.env.RENDER ? 2 : 0));
+app.set('trust proxy', trustProxyHops);
+
 // Security middleware
 app.use(helmet());
 app.use(cors({
@@ -41,7 +48,9 @@ app.use(express.urlencoded({ limit: '10mb', extended: true }));
 // Rate limiting
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100 // limit each IP to 100 requests per windowMs
+  max: 100, // limit each IP to 100 requests per windowMs
+  // Health checks (Render's and ours) shouldn't use up visitors' allowance
+  skip: (req) => req.path === '/api/health'
 });
 app.use(limiter);
 
@@ -74,14 +83,25 @@ app.get('/', (req, res) => {
 });
 
 // Health check
-app.get('/api/health', (req, res) => {
+app.get('/api/health', async (req, res) => {
+  const recipeConnected = recipeDb.readyState === 1;
+  // How many recipes the site can show, so an empty database is visible at a glance
+  let recipes = null;
+  if (recipeConnected) {
+    try {
+      recipes = await recipeDb.db.collection('recipes').countDocuments({ generated: { $ne: true } });
+    } catch (error) {
+      console.error('Health recipe count error:', error.message);
+    }
+  }
   res.json({ 
     status: 'OK', 
     message: 'SavorSync API is running',
     databases: {
       user: userDb.readyState === 1 ? 'connected' : 'disconnected',
-      recipe: recipeDb.readyState === 1 ? 'connected' : 'disconnected'
-    }
+      recipe: recipeConnected ? 'connected' : 'disconnected'
+    },
+    recipes
   });
 });
 
