@@ -144,6 +144,9 @@
 /* 4. Ingredients and steps */
 .recipe-columns {
   display: grid;
+  /* minmax(0, …) stops the scrolling chip rows from widening the column
+     (and with it the whole page) past the screen on phones */
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--space-10);
 }
 .recipe-section-title {
@@ -370,7 +373,7 @@
 @media (min-width: 900px) {
   .recipe-detail-container { padding: var(--space-8) var(--space-8) var(--space-16); }
   .recipe-columns {
-    grid-template-columns: 2fr 3fr;
+    grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
     align-items: start;
   }
   .ingredients {
@@ -559,5 +562,61 @@
   .recipe-meta {
     flex-direction: column;
     align-items: center;
+  }
+}
+
+/* Serving scaler, units and shopping list */
+.ingredient-tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+
+.ingredient-tools__chips {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.servings-stepper {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 2px;
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-pill);
+  background: var(--color-surface);
+}
+
+.servings-stepper__value {
+  min-width: 96px;
+  text-align: center;
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+}
+
+.shopping-add {
+  width: 100%;
+  margin-top: var(--space-4);
+}
+
+.recipe-facts__rating {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: inherit;
+  text-decoration: none;
+}
+
+.recipe-facts__rating:hover {
+  text-decoration: underline;
+}
+
+@media print {
+  .ingredient-tools,
+  .shopping-add,
+  .reviews {
+    display: none !important;
   }
 }

@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useUser } from '../../context/UserContext';
 import { uploadProfileImage, uploadProfileImageWithProgress } from '../../services/apiUpload';
 import { getFavoriteRecipes } from '../../services/apiFavorites';
+import { getMyRecipes } from '../../services/apiGenerator';
 import RecipeCard, { RecipeCardRecipe } from '../../components/RecipeCard';
 import { EmptyState, InlineError, RecipeGridSkeleton } from '../../components/ui/States';
 import '../../styles/shared-layout.css';
@@ -31,9 +32,24 @@ const ProfilePage: React.FC = () => {
     }
   }, []);
 
+  const [myRecipes, setMyRecipes] = useState<RecipeCardRecipe[]>([]);
+  const [myRecipesState, setMyRecipesState] = useState<'loading' | 'error' | 'ready'>('loading');
+
+  const loadMyRecipes = useCallback(async () => {
+    setMyRecipesState('loading');
+    try {
+      setMyRecipes(await getMyRecipes());
+      setMyRecipesState('ready');
+    } catch {
+      setMyRecipesState('error');
+    }
+  }, []);
+
   useEffect(() => {
-    if (isAuthenticated) loadFavorites();
-  }, [isAuthenticated, loadFavorites]);
+    if (!isAuthenticated) return;
+    loadFavorites();
+    loadMyRecipes();
+  }, [isAuthenticated, loadFavorites, loadMyRecipes]);
 
   // Un-hearting a card here removes it from the grid right away
   const favoriteIds = user?.favorites || [];
@@ -189,10 +205,22 @@ const ProfilePage: React.FC = () => {
       <div className="profile-sections">
         <div className="profile-section">
           <h3>My Recipes</h3>
-          <div className="user-recipes">
-            {/* Add user's recipes here */}
-            <p>No recipes created yet. Start cooking to see your creations here!</p>
-          </div>
+          {myRecipesState === 'loading' && <RecipeGridSkeleton count={4} />}
+          {myRecipesState === 'error' && <InlineError message="Couldn't load your recipes." onRetry={loadMyRecipes} />}
+          {myRecipesState === 'ready' && (myRecipes.length ? (
+            <div className="recipe-page-grid">
+              {myRecipes.map(recipe => (
+                <RecipeCard key={recipe._id} recipe={recipe} />
+              ))}
+            </div>
+          ) : (
+            <EmptyState
+              icon="bi-stars"
+              title="No recipes yet"
+              body="Tell AI what's in your kitchen and save the recipes you like."
+              action={{ label: 'Cook with AI', to: '/cook-with-ai', variant: 'secondary' }}
+            />
+          ))}
         </div>
         
         <div className="profile-section profile-section--favorites">

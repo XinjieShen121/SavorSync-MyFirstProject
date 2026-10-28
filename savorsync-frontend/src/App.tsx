@@ -7,6 +7,7 @@ import "./App.css";
 // Import context
 import { UserProvider } from "./context/UserContext";
 import { ToastProvider } from "./context/ToastContext";
+import { ShoppingListProvider } from "./context/ShoppingListContext";
 import SiteNav from "./components/SiteNav";
 import { theme } from "./theme";
 
@@ -26,6 +27,8 @@ import UserProfilePage from "./pages/UserProfilePage/UserProfilePage";
 import CreatePostPage from "./pages/CreatePostPage/CreatePostPage";
 import PostDetailPage from "./pages/PostDetailPage/PostDetailPage";
 import CallbackPage from "./pages/CallbackPage";
+import CookWithAIPage from "./pages/CookWithAIPage/CookWithAIPage";
+import ShoppingListPage from "./pages/ShoppingListPage/ShoppingListPage";
 
 function App() {
   // Add Bootstrap Icons in head
@@ -45,6 +48,7 @@ function App() {
       <CssBaseline />
     <UserProvider>
     <ToastProvider>
+    <ShoppingListProvider>
       <Router>
         <SiteNav />
         <Routes>
@@ -59,6 +63,8 @@ function App() {
             {import.meta.env.DEV && <Route path="/status" element={<StatusPage />} />}
             <Route path="/all-recipes" element={<AllRecipesPage />} />
             <Route path="/trending-recipes" element={<TrendingRecipesPage />} />
+            <Route path="/cook-with-ai" element={<CookWithAIPage />} />
+            <Route path="/shopping-list" element={<ShoppingListPage />} />
             <Route path="/community" element={<CommunityPage />} />
             <Route path="/create-post" element={<CreatePostPage />} />
             <Route path="/post/:postId" element={<PostDetailPage />} />
@@ -66,6 +72,7 @@ function App() {
             <Route path="/profile/:userId" element={<UserProfilePage />} />
         </Routes>
       </Router>
+    </ShoppingListProvider>
     </ToastProvider>
     </UserProvider>
     </ThemeProvider>

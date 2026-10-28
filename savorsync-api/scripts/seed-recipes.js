@@ -1,6 +1,8 @@
 // Fills the recipe database (RECIPE_MONGODB_URI) with starter recipes.
 // Safe to run more than once: recipes that already exist (same recipe_name) are left untouched.
 // Usage, from savorsync-api: npm run seed-recipes
+// To see which database it would write to, without writing anything:
+//   npm run seed-recipes -- --dry-run
 const path = require('path');
 require('dotenv').config({ path: path.join(__dirname, '..', '.env') });
 
@@ -16,6 +18,7 @@ const { regionalAmericanRecipes } = require('./generate-american-regional-recipe
 
 // The American recipes were written with a placeholder video link; don't seed it
 const PLACEHOLDER_VIDEO = 'dQw4w9WgXcQ';
+const DRY_RUN = process.argv.includes('--dry-run');
 
 const prepare = (recipe) => {
   const doc = { ...recipe };
@@ -27,7 +30,7 @@ const prepare = (recipe) => {
 
 const main = async () => {
   await recipeDb.asPromise();
-  console.log(`✅ Connected to recipe database "${recipeDb.name}"`);
+  console.log(`✅ Connected to recipe database "${recipeDb.name}" on ${recipeDb.host}`);
 
   const recipes = [...globalRecipes, ...regionalAmericanRecipes].map(prepare);
 
@@ -39,6 +42,16 @@ const main = async () => {
 
   // Write through the raw collection so fields outside the schema (culturalBackground, subtitle) are kept
   const collection = recipeDb.db.collection('recipes');
+
+  if (DRY_RUN) {
+    const existing = await collection.distinct('recipe_name', { recipe_name: { $in: recipes.map(r => r.recipe_name) } });
+    const total = await collection.countDocuments();
+    console.log(`\n🔎 Dry run, nothing was written.`);
+    console.log(`   The "recipes" collection has ${total} documents.`);
+    console.log(`   A real run would add ${recipes.length - existing.length} of ${recipes.length} starter recipes and leave ${existing.length} that already exist untouched.`);
+    return;
+  }
+
   const now = new Date();
   let added = 0;
   for (const recipe of recipes) {

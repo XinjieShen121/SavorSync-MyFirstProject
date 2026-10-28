@@ -787,6 +787,8 @@ h1, h2, h3, h4, h5, h6 {
 .home-search {
   position: relative;
   flex: 1 1 320px;
+  /* Let the field shrink on narrow phones instead of widening the page */
+  min-width: 0;
   display: flex;
 }
 
