@@ -144,6 +144,9 @@
 /* 4. Ingredients and steps */
 .recipe-columns {
   display: grid;
+  /* minmax(0, …) stops the scrolling chip rows from widening the column
+     (and with it the whole page) past the screen on phones */
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--space-10);
 }
 .recipe-section-title {
@@ -370,7 +373,7 @@
 @media (min-width: 900px) {
   .recipe-detail-container { padding: var(--space-8) var(--space-8) var(--space-16); }
   .recipe-columns {
-    grid-template-columns: 2fr 3fr;
+    grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
     align-items: start;
   }
   .ingredients {

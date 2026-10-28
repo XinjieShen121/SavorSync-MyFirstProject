@@ -554,6 +554,13 @@
   .header-content {
     margin: 0;
     order: 2;
+    width: 100%;
+  }
+
+  /* Let the title and tagline wrap instead of widening the page on phones */
+  .header-content h1,
+  .header-content p {
+    white-space: normal;
   }
   
   .header-content h1 {
