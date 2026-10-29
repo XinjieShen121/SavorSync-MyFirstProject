@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
+import { Drawer, Popover, useMediaQuery } from '@mui/material';
 import { getAllRecipes } from '../../services/apiRecipe';
 import RecipeCard, { RecipeCardRecipe } from '../../components/RecipeCard';
 import { EmptyState, ErrorState, LoadingState, RecipeGridSkeleton } from '../../components/ui/States';
@@ -38,6 +39,9 @@ const AllRecipesPage: React.FC = () => {
   const [state, setState] = useState<'loading' | 'error' | 'ready'>('loading');
   const [searchText, setSearchText] = useState(query);
   const [shown, setShown] = useState(PAGE_SIZE);
+  // The Filters panel: a popover under the button on desktop, a bottom sheet on phones
+  const [filtersAnchor, setFiltersAnchor] = useState<HTMLElement | null>(null);
+  const isMobile = useMediaQuery('(max-width: 599px)');
 
   const load = useCallback(async () => {
     setState('loading');
@@ -102,6 +106,18 @@ const AllRecipesPage: React.FC = () => {
   ), [recipes, query, cuisine, diet, difficulty, time]);
 
   const activeFilters = [cuisine, diet, difficulty, time].filter(Boolean).length + (query ? 1 : 0);
+  // Filters behind the button: diet, difficulty and time (search and cuisine stay visible)
+  const panelFilters = [
+    diet && { key: 'diet', label: DIET_LABELS[diet as Diet] || diet },
+    difficulty && { key: 'difficulty', label: difficulty },
+    time && { key: 'time', label: TIME_LABELS[time as TimeBucket] || time },
+  ].filter(Boolean) as { key: string; label: string }[];
+  const hasPanelOptions = options.diets.length + options.difficulties.length + options.times.length > 0;
+  const clearPanelFilters = () => {
+    const next = new URLSearchParams(searchParams);
+    ['diet', 'difficulty', 'time'].forEach(key => next.delete(key));
+    setSearchParams(next, { replace: true });
+  };
 
   const chip = (key: string, value: string, label: string, current: string) => (
     <button
@@ -114,6 +130,49 @@ const AllRecipesPage: React.FC = () => {
       {current === value && <i className="bi bi-check" aria-hidden="true"></i>}
       {label}
     </button>
+  );
+
+  const filtersPanel = (
+    <div className="browse-panel" id="browse-filters-panel" role="dialog" aria-labelledby="browse-panel-title">
+      <div className="browse-panel__head">
+        <h2 className="browse-panel__title" id="browse-panel-title">Filters</h2>
+        <button type="button" className="btn btn--icon btn--sm" aria-label="Close filters" onClick={() => setFiltersAnchor(null)}>
+          <i className="bi bi-x-lg" aria-hidden="true"></i>
+        </button>
+      </div>
+      {options.diets.length > 0 && (
+        <div className="browse-panel__group" role="group" aria-label="Diet">
+          <span className="browse__filter-label">Diet</span>
+          <div className="browse__chips">
+            {options.diets.map(d => chip('diet', d, DIET_LABELS[d], diet))}
+          </div>
+        </div>
+      )}
+      {options.difficulties.length > 0 && (
+        <div className="browse-panel__group" role="group" aria-label="Difficulty">
+          <span className="browse__filter-label">Difficulty</span>
+          <div className="browse__chips">
+            {options.difficulties.map(d => chip('difficulty', d, d, difficulty))}
+          </div>
+        </div>
+      )}
+      {options.times.length > 0 && (
+        <div className="browse-panel__group" role="group" aria-label="Total time">
+          <span className="browse__filter-label">Time</span>
+          <div className="browse__chips">
+            {options.times.map(t => chip('time', t, TIME_LABELS[t], time))}
+          </div>
+        </div>
+      )}
+      <div className="browse-panel__foot">
+        <button type="button" className="btn btn--ghost btn--sm" onClick={clearPanelFilters} disabled={panelFilters.length === 0}>
+          Clear
+        </button>
+        <button type="button" className="btn btn--primary" onClick={() => setFiltersAnchor(null)}>
+          Show {results.length} {results.length === 1 ? 'recipe' : 'recipes'}
+        </button>
+      </div>
+    </div>
   );
 
   return (
@@ -156,28 +215,32 @@ const AllRecipesPage: React.FC = () => {
                 </div>
               </div>
             )}
-            {options.diets.length > 0 && (
-              <div className="browse__filter-row" role="group" aria-label="Diet">
-                <span className="browse__filter-label">Diet</span>
-                <div className="browse__chips">
-                  {options.diets.map(d => chip('diet', d, DIET_LABELS[d], diet))}
-                </div>
-              </div>
-            )}
-            {options.difficulties.length > 0 && (
-              <div className="browse__filter-row" role="group" aria-label="Difficulty">
-                <span className="browse__filter-label">Difficulty</span>
-                <div className="browse__chips">
-                  {options.difficulties.map(d => chip('difficulty', d, d, difficulty))}
-                </div>
-              </div>
-            )}
-            {options.times.length > 0 && (
-              <div className="browse__filter-row" role="group" aria-label="Total time">
-                <span className="browse__filter-label">Time</span>
-                <div className="browse__chips">
-                  {options.times.map(t => chip('time', t, TIME_LABELS[t], time))}
-                </div>
+            {hasPanelOptions && (
+              <div className="browse__filter-bar">
+                <button
+                  type="button"
+                  className="btn btn--secondary btn--sm browse__filters-button"
+                  aria-haspopup="dialog"
+                  aria-expanded={!!filtersAnchor}
+                  aria-controls="browse-filters-panel"
+                  onClick={event => setFiltersAnchor(event.currentTarget)}
+                >
+                  <i className="bi bi-sliders" aria-hidden="true"></i>
+                  Filters{panelFilters.length > 0 && ` (${panelFilters.length})`}
+                </button>
+                {panelFilters.map(({ key, label }) => (
+                  <button
+                    key={key}
+                    type="button"
+                    className="chip"
+                    aria-pressed="true"
+                    aria-label={`Remove filter: ${label}`}
+                    onClick={() => setParam(key, '')}
+                  >
+                    {label}
+                    <i className="bi bi-x" aria-hidden="true"></i>
+                  </button>
+                ))}
               </div>
             )}
           </div>
@@ -240,6 +303,23 @@ const AllRecipesPage: React.FC = () => {
           </>
         )}
       </div>
+
+      {isMobile ? (
+        <Drawer anchor="bottom" open={!!filtersAnchor} onClose={() => setFiltersAnchor(null)} PaperProps={{ className: 'browse-sheet' }}>
+          {filtersPanel}
+        </Drawer>
+      ) : (
+        <Popover
+          open={!!filtersAnchor}
+          anchorEl={filtersAnchor}
+          onClose={() => setFiltersAnchor(null)}
+          anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
+          transformOrigin={{ vertical: 'top', horizontal: 'left' }}
+          PaperProps={{ className: 'browse-popover' }}
+        >
+          {filtersPanel}
+        </Popover>
+      )}
     </div>
   );
 };
