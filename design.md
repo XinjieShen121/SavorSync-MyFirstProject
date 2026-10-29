@@ -1,6 +1,6 @@
 # SavorSync Design System
 
-Version 1.0 · October 2026
+Version 1.1 · October 2026
 
 This is the single source of truth for how SavorSync looks and behaves. Every page, component and CSS file uses the tokens and patterns below. If something you need is not here, add it to this file first, then build it.
 
@@ -88,7 +88,7 @@ Two families only. Load them once in `index.html`:
 ```html
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;1,400;1,600&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
 ```
 
 | Token | Value |
@@ -112,6 +112,7 @@ Quicksand, Segoe UI as a primary font, and the Vite `system-ui, Avenir` stack ar
 | `--text-sm` | 14px / 20px | Body 400 or 500 | Metadata, chips, buttons (small) |
 | `--text-xs` | 12px / 16px | Body 500 | Badges, captions, overline (uppercase, +0.04em) |
 | `--text-step` | 28px / 40px (mobile 24 / 34) | Body 500 | Cook mode step text (section 4.6) |
+| Deck | 20px / 30px (`--text-h4`) | Display italic 400, `text-secondary` | The line under a headline, usually the recipe `subtitle` (section 4.11). Italic is for decks, type covers and quoted questions only. |
 
 Weights: `--weight-regular: 400`, `--weight-medium: 500`, `--weight-semibold: 600`, `--weight-bold: 700`.
 
@@ -187,7 +188,7 @@ Mobile first: base styles target phones, then `@media (min-width: …)`. CSS cus
 ### 2.8 Iconography and imagery
 
 - **One icon set:** Bootstrap Icons (already loaded app-wide). Remove `react-icons`, icons8 PNGs and emoji used as icons. Size 16px inline with text, 20px in buttons, 24px standalone. Icon-only buttons need `aria-label`.
-- **Recipe photos:** 4:3 on cards, 16:9 on the recipe hero, `object-fit: cover`, `--radius-md`. Always meaningful `alt` text (the dish name). Fallback is a neutral `--color-surface-sunken` block with a `bi-image` icon, never a random stock photo.
+- **Recipe photos:** 4:3 on cards, 16:9 on the recipe hero, `object-fit: cover`, `--radius-md`. Always meaningful `alt` text (the dish name). When there is no photo (or it fails to load), show the type cover (4.11), never a random stock photo or an AI image presented as the dish. Free-licensed photos show their credit line (4.11).
 - **Focus ring:** `outline: 3px solid var(--color-brand-700); outline-offset: 2px;` on `:focus-visible`. Never `outline: none` without this replacement.
 
 ### 2.9 tokens.css reference
@@ -531,6 +532,26 @@ Every view that loads data shows exactly one of four states: **loading**, **empt
 - Toast: see 4.7. Variants success, error, info: left 4px bar in the status color, `surface` background, `text`.
 - Dialog: `surface`, `--radius-md`, `--shadow-3`, max width 560px, padding `--space-6`, title `--text-h3`. Actions bottom right, Primary on the right. Backdrop `--color-overlay`. Esc and backdrop click close it; focus is trapped and returned.
 
+### 4.11 Editorial patterns
+
+Used on the home page and any page that reads like a magazine feature. Components: `src/components/TypeCover.tsx`; home page styles in `HomePage.css`.
+
+- **Kicker, headline, deck.** Kicker: `--text-xs` 600, uppercase, +0.08em, `brand-800`, for context such as "Dish of the day · Thai · Asian". Headline: `--font-display` 700. Deck: the 2.2 Deck style, max width about 34ch. Use real data only (cuisine, region, `subtitle`); never invent a headline.
+- **Section rule.** Sections open with a 1px `--color-border` top rule and `--space-6` above the kicker, instead of sitting inside a card. Cards stay for things that are one tappable object (recipe card, post). One section per page may sit on a `surface-warm` band (on the home page, the AI section).
+- **Type cover.** Stands in for a missing recipe photo in the same frame (4:3 on cards). A tinted block with the region as a kicker and a `--font-display` italic 600 title. Next to a visible dish title the cover shows the cuisine, otherwise the dish name. The tint is fixed per region, using only AA pairs from 2.1:
+
+| Region | Background | Text |
+| --- | --- | --- |
+| Mediterranean (and default) | `surface-warm` | `brand-800` |
+| European | `surface-sunken` | `text` |
+| Asian | `saffron-100` | `saffron-700` |
+| Middle Eastern, African | `herb-50` | `herb-700` |
+| Latin, American | `brand-50` | `brand-800` |
+
+  The cover is `aria-hidden`; the dish name is always in real text nearby. Large covers show a small "Photo coming soon" note.
+- **Photo credit.** When a recipe has `image_credit` (`{ author, license, license_url, source_url, source }`, filled by `npm run add-photos` from Wikimedia Commons), show "Photo: {author}, {license} via {source}" under the photo in `--text-xs`, `text-muted`, with the author linked to `source_url` and the license to `license_url`. Show it only when the photo itself is shown.
+- **Numbered lists** (collection shelves) use a `brand-500` display numeral only when the list is a real sequence or count; the cuisine index uses dotted leaders and counts instead of numbers.
+
 ---
 
 ## 5. Page patterns
@@ -548,7 +569,18 @@ Top to bottom on mobile; two columns from 900px.
 
 ### 5.2 Home
 
-Hero band on `surface-warm`: headline (`--text-display`, static, no typewriter), one line of supporting text, a search field, and a Primary "Start cooking" button for Quick Start. Then rows: "Trending this week" (horizontal card scroller), "Explore by cuisine" (4 photo tiles with a scrim and white `--text-h3` label), "From the community" (3 posts). The multilingual greeting becomes one rotating line under the headline (fades every 4s, static under reduced motion).
+Editorial layout (4.11). One visually hidden `h1`; each section is an `h2`. Top to bottom:
+
+1. **Dish of the day hero:** photo or type cover (4:3, 7 columns) beside kicker, headline (clamp up to 56px), deck, two sentences of `culturalBackground`, a facts row (time, difficulty, servings, from data only), Primary "Cook this dish" and the heart. Photo credit under the photo. On phones the photo comes first, full bleed.
+2. **Search band** (`surface`, rules above and below): labeled field, Primary "Search", quick-route chips with counts (Under 30 min, Vegetarian, Easy; shown only with matches) and a Ghost "Help me pick" for Quick Start.
+3. **Collections:** up to three shelves (Under 30 minutes, Meat-free tables, Weekend projects), each a numbered list of up to 4 dishes linking to the matching All Recipes filter.
+4. **Browse by cuisine:** a typographic index grouped by region with real counts.
+5. **Ask the kitchen:** the one `surface-warm` band. Introduces Cook with AI and Ask about this dish, shows example questions as plain text (not buttons), and says AI answers can be wrong.
+6. **Trending:** recipe cards (4.3), 4 / 3 / 2 across, a sideways scroller on phones.
+7. **Stories behind the dish:** one lead story with media and two shorter ones, text from the recipe's own `culturalBackground`.
+8. **From the community** (3 posts), then the footer.
+
+Sections without data are hidden; loading and errors follow 4.7.
 
 ### 5.3 List pages (All recipes, Cuisine, Trending)
 
@@ -618,3 +650,4 @@ Use this when replacing hardcoded values (stage 2).
 | Version | Date | Change |
 | --- | --- | --- |
 | 1.0 | 2026-10-20 | First version, based on the existing SavorSync brand (`#FF6B35`, `#FBE7D2`, Playfair Display, Poppins) with accessible action colors, one body font, and the component patterns above. |
+| 1.1 | 2026-10-29 | Editorial additions from the home page redesign (PR #8): Deck type style and Playfair italic (2.2), type cover and photo credit replacing the grey photo fallback (2.8, 4.11), section rules (4.11), and the new home page structure (5.2). |
