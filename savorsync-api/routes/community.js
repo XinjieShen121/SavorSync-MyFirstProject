@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { authenticateToken: auth } = require('../middleware/auth');
 const { userDb } = require('../config/mongoose');
+const { containsText } = require('../utils/regex');
 
 // Get community feed (posts from followed users and trending posts)
 router.get('/feed', async (req, res) => {
@@ -127,8 +128,8 @@ router.get('/search', async (req, res) => {
 
     const searchQuery = {
       $or: [
-        { name: { $regex: q, $options: 'i' } },
-        { email: { $regex: q, $options: 'i' } }
+        { name: { $regex: containsText(q) } },
+        { email: { $regex: containsText(q) } }
       ]
     };
 

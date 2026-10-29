@@ -9,6 +9,8 @@ export interface CookIngredient {
   name: string;
   // Set when the cook swapped this ingredient (design.md 4.5)
   swappedFrom?: string;
+  // Shorter word the swap replaces in the steps, e.g. "pork" for "pork belly"
+  swapKey?: string;
 }
 
 interface CookModeProps {
@@ -121,10 +123,17 @@ const CookMode: React.FC<CookModeProps> = ({
     return () => { document.body.style.overflow = previousOverflow; };
   }, []);
 
+  // Timers stop when cook mode closes, so check first instead of losing a running one to a stray Esc
+  const leave = useCallback(() => {
+    const running = Object.values(timers).some((t) => t.running);
+    if (running && !window.confirm('A timer is still running. Leave cook mode and stop it?')) return;
+    onClose();
+  }, [timers, onClose]);
+
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (ingredientsOpen) return;
-      if (e.key === 'Escape') onClose();
+      if (e.key === 'Escape') leave();
       else if (e.key === 'ArrowRight' || (e.key === ' ' && (e.target as HTMLElement).tagName !== 'BUTTON')) {
         e.preventDefault();
         next();
@@ -132,7 +141,7 @@ const CookMode: React.FC<CookModeProps> = ({
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [back, next, onClose, ingredientsOpen]);
+  }, [back, next, leave, ingredientsOpen]);
 
   // One tick drives every running timer, so timers keep going between steps
   const anyRunning = Object.values(timers).some((t) => t.running);
@@ -167,7 +176,7 @@ const CookMode: React.FC<CookModeProps> = ({
   // Bold the ingredients named in the step, with their quantity; swapped ones in herb green
   const renderStep = (text: string) => {
     const keys = ingredients
-      .flatMap((ing, index) => [ing.swappedFrom, ing.name].filter(Boolean).map((key) => ({ key: key as string, index })))
+      .flatMap((ing, index) => [ing.swappedFrom, ing.swapKey, ing.name].filter(Boolean).map((key) => ({ key: key as string, index })))
       .sort((a, b) => b.key.length - a.key.length);
     if (!keys.length) return text;
     const pattern = new RegExp(`\\b(${keys.map((k) => escapeRegExp(k.key)).join('|')})\\b`, 'gi');
@@ -201,7 +210,7 @@ const CookMode: React.FC<CookModeProps> = ({
   return (
     <div className="cook-mode" role="dialog" aria-modal="true" aria-label={`Cook mode: ${title}`}>
       <div className="cook-mode__top">
-        <button ref={exitRef} type="button" className="btn btn--icon" aria-label="Exit cook mode" onClick={onClose}>
+        <button ref={exitRef} type="button" className="btn btn--icon" aria-label="Exit cook mode" onClick={leave}>
           <i className="bi bi-x-lg" aria-hidden="true"></i>
         </button>
         <div className="cook-mode__title">
@@ -230,7 +239,7 @@ const CookMode: React.FC<CookModeProps> = ({
             <Link to={`/create-post?recipe=${recipeId}`} className="btn btn--primary btn--lg">
               <i className="bi bi-camera" aria-hidden="true"></i>Share a photo
             </Link>
-            <button type="button" className="btn btn--ghost btn--lg" onClick={onClose}>
+            <button type="button" className="btn btn--ghost btn--lg" onClick={leave}>
               <i className="bi bi-arrow-left" aria-hidden="true"></i>Back to recipe
             </button>
           </div>

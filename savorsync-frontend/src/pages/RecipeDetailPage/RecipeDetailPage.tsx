@@ -352,7 +352,7 @@ const RecipeDetailPage: React.FC = () => {
     const { name, quantity: rawQuantity } = parseIngredient(ingredient);
     const quantity = displayQuantity(rawQuantity);
     const swap = swaps[index];
-    return swap ? { quantity, name: swap.name, swappedFrom: name } : { quantity, name };
+    return swap ? { quantity, name: swap.name, swappedFrom: name, swapKey: swap.matchKey } : { quantity, name };
   });
 
   const addToShoppingList = () => {

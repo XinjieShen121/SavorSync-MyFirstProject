@@ -76,3 +76,5 @@ setup-*.js
 *.test.js
 *.spec.js
 debug*.html
+# Photo picks preview from npm run add-photos -- --dry-run
+savorsync-api/photos-preview.html

@@ -2,6 +2,7 @@ const express = require('express');
 const { body, validationResult } = require('express-validator');
 const Post = require('../models/Post');
 const { authenticateToken } = require('../middleware/auth');
+const { containsText } = require('../utils/regex');
 const cloudinary = require('../config/cloudinary');
 
 const router = express.Router();
@@ -76,14 +77,14 @@ router.get('/', async (req, res) => {
     }
 
     if (author) {
-      query.author = { $regex: author, $options: 'i' };
+      query.author = { $regex: containsText(author) };
     }
 
     if (search) {
       query.$or = [
-        { title: { $regex: search, $options: 'i' } },
-        { content: { $regex: search, $options: 'i' } },
-        { tags: { $in: [new RegExp(search, 'i')] } }
+        { title: { $regex: containsText(search) } },
+        { content: { $regex: containsText(search) } },
+        { tags: { $in: [containsText(search)] } }
       ];
     }
 
