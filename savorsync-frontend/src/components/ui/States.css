@@ -34,16 +34,10 @@
   width: 100%;
 }
 @media (min-width: 600px) { .skeleton-grid { grid-template-columns: repeat(2, 1fr); } }
-@media (min-width: 900px) { .skeleton-grid { grid-template-columns: repeat(3, 1fr); } }
-@media (min-width: 1200px) { .skeleton-grid { grid-template-columns: repeat(4, 1fr); } }
+@media (min-width: 900px) { .skeleton-grid { grid-template-columns: repeat(3, 1fr); column-gap: var(--space-8); } }
 
-.skeleton-card {
-  overflow: hidden;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  background: var(--color-surface);
-}
-.skeleton-card .skeleton--image { border-radius: 0; }
+/* Matches the unboxed recipe card */
+.skeleton-card .skeleton--image { aspect-ratio: 4 / 3; }
 .skeleton-card__body,
 .skeleton-post,
 .skeleton-profile,
@@ -52,7 +46,7 @@
   flex-direction: column;
   gap: var(--space-3);
 }
-.skeleton-card__body { padding: var(--space-4); }
+.skeleton-card__body { padding: var(--space-4) 0 0; }
 .skeleton-post {
   max-width: 680px;
   margin: 0 auto;

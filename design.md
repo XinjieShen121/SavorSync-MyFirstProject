@@ -421,6 +421,8 @@ Anatomy (top to bottom): photo 4:3 with cuisine badge top-left and heart icon bu
 - No tags or subtitles on the card. Grid: 1 column under 600px, 2 at 600, 3 at 900, 4 at 1200; gap `--space-6`.
 - Loading: skeleton card (4.7).
 
+**Update (1.2):** cards are unboxed: no border, shadow or white panel. The 4:3 photo (or type cover) has `--radius-md` and the heart in its corner; below it sit a cuisine kicker, the title in `--font-display` 700 (`--text-h4`, 24px from 900px) and one line of facts ("25 min · Easy · Vegetarian"). Hover zooms the photo to 1.03 and underlines the title.
+
 ### 4.4 Cultural story card
 
 A compact teaser of the dish's story, shown above the ingredients on the recipe page.
@@ -586,7 +588,9 @@ Sections without data are hidden; loading and errors follow 4.7.
 
 ### 5.3 List pages (All recipes, Cuisine, Trending)
 
-Page title (`--text-h1`) and a one-line description, search, then the filter bar (4.2). On All recipes the bar shows only the cuisine row; diet, difficulty and time sit behind a Secondary small "Filters (n)" button (n = how many of those are on), which opens a popover on desktop and a bottom sheet under 600px, with "Clear" and "Show N recipes" at the bottom. Filters that are on show next to the button as pressed chips that remove themselves when tapped. Then the result count (`--text-sm`, `text-secondary`, `aria-live="polite"`), the card grid (4.3), then "Load more" as a Secondary button (or infinite scroll with a visible fallback button). States per 4.7.
+**All recipes:** an editorial header (4.11): kicker "The collection · N dishes from M cuisines", a display headline and a Deck, with the search field beside it from 900px (Enter searches). Then one toolbar between two hairline rules: the cuisine chips in a scrolling row (the chosen one filled in `text`), then a Secondary small "Filters (n)" button and a "Sort" select (Featured, Quickest first, A to Z) on the right. Diet, difficulty and time live in the Filters popover (desktop) or bottom sheet (under 600px), with "Clear" and "Show N recipes". Below the toolbar, a summary line: "**9 recipes**, Italian", each panel filter as an `herb-50` pill with ✕ to remove it, and "Clear all". Every filter and the sort live in the URL.
+
+All list pages use the card grid (4.3): 1, 2, then 3 columns from 900px (`--space-8` column gap, `--space-12` row gap), then "Load more" as a Secondary button. States per 4.7.
 
 ### 5.4 Community, post and profile
 
