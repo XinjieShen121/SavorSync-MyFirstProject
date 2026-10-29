@@ -1,0 +1,9 @@
+.photo-credit {
+  margin: var(--space-2) 0 0;
+  font-size: var(--text-xs);
+  line-height: 16px;
+  color: var(--color-text-muted);
+  overflow-wrap: anywhere;
+}
+
+.photo-credit a { color: inherit; }

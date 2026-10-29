@@ -16,6 +16,9 @@ import { useToast } from '../../context/ToastContext';
 import { scaleQuantity, convertQuantity, detectSystem, UnitSystem } from '../../utils/quantities';
 import type { ReviewSummary } from '../../services/apiReviews';
 import { savedStepKey } from '../../utils/cookMode';
+import { formatMinutes, parseMinutes, totalMinutes } from '../../utils/recipeFacts';
+import TypeCover from '../../components/TypeCover';
+import PhotoCredit, { type ImageCredit } from '../../components/PhotoCredit';
 import './RecipeDetailPage.css';
 
 type Diet = 'vegetarian' | 'gluten-free' | 'low-sodium';
@@ -34,8 +37,10 @@ interface Recipe {
   title?: string;
   subtitle?: string;
   cuisine?: string;
+  region?: string;
   image?: string;
   image_url?: string;
+  image_credit?: ImageCredit;
   prep_time?: string;
   cook_time?: string;
   prepTime?: string;
@@ -283,6 +288,16 @@ const RecipeDetailPage: React.FC = () => {
       : null;
   const prep = recipe.prep_time || recipe.prepTime;
   const cook = recipe.cook_time || recipe.cookTime;
+  const total = totalMinutes(recipe);
+  // Show prep and cook in the same short format as the total; keep the recipe's own text if it can't be read
+  const shortTime = (value: string) => {
+    const minutes = parseMinutes(value);
+    return minutes ? formatMinutes(minutes) : value;
+  };
+  const showPhoto = !!imageSrc && !imageFailed;
+  const kicker = [recipe.cuisine, recipe.region].filter(Boolean).join(' · ');
+  // Fun facts are context, not cooking instructions, so they sit together beside the steps
+  const goodToKnow = storyIsFirstFact ? funFacts.slice(1) : funFacts;
   const swapCount = Object.keys(swaps).length;
   // Serving scaler and units: scale by servings when the recipe has them,
   // otherwise by batch size; convert units only when the cook asks for it
@@ -339,61 +354,67 @@ const RecipeDetailPage: React.FC = () => {
           Recipes
         </Link>
 
-        {/* 1. Hero */}
-        <div className="recipe-hero">
-          {imageSrc && !imageFailed ? (
-            <img src={imageSrc} alt={title} onError={() => setImageFailed(true)} />
-          ) : (
-            <div className="recipe-hero__fallback" aria-hidden="true">
-              <i className="bi bi-image"></i>
+        {/* 1. Hero: photo or type cover beside the title (design.md 4.11) */}
+        <div className="recipe-intro">
+          <figure className="recipe-hero">
+            <div className="recipe-hero__media">
+              {showPhoto ? (
+                <img src={imageSrc} alt={title} onError={() => setImageFailed(true)} />
+              ) : (
+                // The dish name sits beside the cover, so the cover names the cuisine
+                <TypeCover title={recipe.cuisine || title || 'Recipe'} kicker={recipe.region} region={recipe.region} size="hero" />
+              )}
             </div>
-          )}
-          {recipe.cuisine && <span className="badge badge--cuisine recipe-hero__badge">{recipe.cuisine}</span>}
+            {showPhoto && (
+              <figcaption><PhotoCredit credit={recipe.image_credit} /></figcaption>
+            )}
+          </figure>
+
+          {/* 2. Header */}
+          <header className="recipe-header">
+            {kicker && <p className="recipe-kicker">{kicker}</p>}
+            <h1 className="recipe-name">{title}</h1>
+            {recipe.subtitle && <p className="recipe-deck">{recipe.subtitle}</p>}
+            <ul className="recipe-facts" aria-label="Recipe facts">
+              {total !== null && (
+                <li className="recipe-facts__total"><i className="bi bi-clock" aria-hidden="true"></i>{formatMinutes(total)} total</li>
+              )}
+              {(prep || cook) && (
+                <li>
+                  {[prep && `Prep ${shortTime(prep)}`, cook && `Cook ${shortTime(cook)}`].filter(Boolean).join(' · ')}
+                </li>
+              )}
+              {recipe.servings && (
+                <li><i className="bi bi-people" aria-hidden="true"></i>{recipe.servings} servings</li>
+              )}
+              {recipe.difficulty && (
+                <li><i className="bi bi-bar-chart" aria-hidden="true"></i>{recipe.difficulty}</li>
+              )}
+              {reviewSummary && reviewSummary.count > 0 && reviewSummary.average !== null && (
+                <li>
+                  <a href="#reviews" className="recipe-facts__rating">
+                    <Stars value={reviewSummary.average} label={`Rated ${reviewSummary.average} out of 5`} />
+                    {reviewSummary.count} {reviewSummary.count === 1 ? 'review' : 'reviews'}
+                  </a>
+                </li>
+              )}
+            </ul>
+            <div className="recipe-actions">
+              <FavoriteButton recipeId={recipe._id} recipeName={title || 'this recipe'} />
+              <button type="button" className="btn btn--icon" aria-label="Share recipe" onClick={shareRecipe}>
+                <i className="bi bi-share" aria-hidden="true"></i>
+              </button>
+              <button type="button" className="btn btn--icon" aria-label="Print recipe" onClick={() => window.print()}>
+                <i className="bi bi-printer" aria-hidden="true"></i>
+              </button>
+            </div>
+          </header>
         </div>
 
-        {/* 2. Header */}
-        <header className="recipe-header">
-          <h1 className="recipe-name">{title}</h1>
-          {recipe.subtitle && <p className="recipe-tagline">{recipe.subtitle}</p>}
-          <ul className="recipe-facts">
-            {prep && (
-              <li><i className="bi bi-clock" aria-hidden="true"></i>Prep {prep}</li>
-            )}
-            {cook && (
-              <li><i className="bi bi-fire" aria-hidden="true"></i>Cook {cook}</li>
-            )}
-            {recipe.servings && (
-              <li><i className="bi bi-people" aria-hidden="true"></i>{recipe.servings} servings</li>
-            )}
-            {recipe.difficulty && (
-              <li><i className="bi bi-bar-chart" aria-hidden="true"></i>{recipe.difficulty}</li>
-            )}
-            {reviewSummary && reviewSummary.count > 0 && reviewSummary.average !== null && (
-              <li>
-                <a href="#reviews" className="recipe-facts__rating">
-                  <Stars value={reviewSummary.average} label={`Rated ${reviewSummary.average} out of 5`} />
-                  {reviewSummary.count} {reviewSummary.count === 1 ? 'review' : 'reviews'}
-                </a>
-              </li>
-            )}
-          </ul>
-          <div className="recipe-actions">
-            <FavoriteButton recipeId={recipe._id} recipeName={title || 'this recipe'} />
-            <button type="button" className="btn btn--icon" aria-label="Share recipe" onClick={shareRecipe}>
-              <i className="bi bi-share" aria-hidden="true"></i>
-            </button>
-            <button type="button" className="btn btn--icon" aria-label="Print recipe" onClick={() => window.print()}>
-              <i className="bi bi-printer" aria-hidden="true"></i>
-            </button>
-          </div>
-        </header>
-
-        {/* 3. Cultural story card (4.4) */}
+        {/* 3. The story: a label and a short excerpt under a hairline rule (4.11) */}
         {story && (
           <section className="recipe-story" aria-labelledby="story-title">
-            <p className="recipe-story__overline" id="story-title">
-              <i className="bi bi-globe2" aria-hidden="true"></i>The story
-            </p>
+            <h2 className="recipe-kicker" id="story-title">The story</h2>
             <p className={`recipe-story__body ${storyOpen ? 'is-open' : ''}`} id="story-body">
               {story}
             </p>
@@ -564,7 +585,6 @@ const RecipeDetailPage: React.FC = () => {
             <h2 id="steps-title" className="recipe-section-title">Steps</h2>
             <ol className="step-list">
               {instructions.map((step, index) => {
-                const fact = tips[index];
                 return (
                   <li key={index} className="step">
                     <button
@@ -577,17 +597,22 @@ const RecipeDetailPage: React.FC = () => {
                     </button>
                     <div className="step__body">
                       <p>{renderStepText(step)}</p>
-                      {fact && (
-                        <div className="tip-box">
-                          <i className="bi bi-lightbulb" aria-hidden="true"></i>
-                          <p>{fact}</p>
-                        </div>
-                      )}
                     </div>
                   </li>
                 );
               })}
             </ol>
+
+            {goodToKnow.length > 0 && (
+              <aside className="recipe-know" aria-labelledby="know-title">
+                <h3 className="recipe-kicker" id="know-title">Good to know</h3>
+                <ul className="recipe-know__list">
+                  {goodToKnow.map((fact, index) => (
+                    <li key={index}>{fact}</li>
+                  ))}
+                </ul>
+              </aside>
+            )}
           </section>
         </div>
 
