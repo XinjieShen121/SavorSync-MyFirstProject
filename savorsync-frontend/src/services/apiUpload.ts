@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { API_BASE_URL } from './config';
+import { API_BASE_URL, handleExpiredLogin } from './config';
 
 
 // Create axios instance for uploads
@@ -47,10 +47,7 @@ uploadAPI.interceptors.response.use(
   (response) => response,
   (error) => {
     console.error('Upload API Error:', error);
-    if (error.response?.status === 401) {
-      localStorage.removeItem('token');
-      window.location.href = '/login';
-    }
+    handleExpiredLogin(error);
     return Promise.reject(error);
   }
 );
@@ -60,10 +57,7 @@ profileUploadAPI.interceptors.response.use(
   (response) => response,
   (error) => {
     console.error('Profile Upload API Error:', error);
-    if (error.response?.status === 401) {
-      localStorage.removeItem('token');
-      window.location.href = '/login';
-    }
+    handleExpiredLogin(error);
     return Promise.reject(error);
   }
 );

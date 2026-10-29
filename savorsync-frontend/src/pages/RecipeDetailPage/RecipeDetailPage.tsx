@@ -36,6 +36,7 @@ interface Recipe {
   cuisine?: string;
   image?: string;
   image_url?: string;
+  image_credit?: { author?: string; license?: string; license_url?: string; source_url?: string; source?: string };
   prep_time?: string;
   cook_time?: string;
   prepTime?: string;
@@ -301,7 +302,7 @@ const RecipeDetailPage: React.FC = () => {
     const { name, quantity: rawQuantity } = parseIngredient(ingredient);
     const quantity = displayQuantity(rawQuantity);
     const swap = swaps[index];
-    return swap ? { quantity, name: swap.name, swappedFrom: name } : { quantity, name };
+    return swap ? { quantity, name: swap.name, swappedFrom: name, swapKey: swap.matchKey } : { quantity, name };
   });
 
   const addToShoppingList = () => {
@@ -350,6 +351,20 @@ const RecipeDetailPage: React.FC = () => {
           )}
           {recipe.cuisine && <span className="badge badge--cuisine recipe-hero__badge">{recipe.cuisine}</span>}
         </div>
+        {imageSrc && !imageFailed && recipe.image_credit?.source_url && (
+          <p className="recipe-hero__credit">
+            Photo: <a href={recipe.image_credit.source_url} target="_blank" rel="noopener noreferrer">{recipe.image_credit.author || 'Unknown author'}</a>
+            {recipe.image_credit.license && (
+              <>
+                {', '}
+                {recipe.image_credit.license_url
+                  ? <a href={recipe.image_credit.license_url} target="_blank" rel="noopener noreferrer">{recipe.image_credit.license}</a>
+                  : recipe.image_credit.license}
+              </>
+            )}
+            {recipe.image_credit.source && ` via ${recipe.image_credit.source}`}
+          </p>
+        )}
 
         {/* 2. Header */}
         <header className="recipe-header">

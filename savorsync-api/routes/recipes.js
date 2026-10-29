@@ -1,6 +1,7 @@
 const express = require('express');
 const { recipeDb } = require('../config/mongoose');
 const { authenticateToken } = require('../middleware/auth');
+const { containsText, escapeRegExp } = require('../utils/regex');
 const { ObjectId } = require('mongodb');
 const User = require('../models/User');
 
@@ -86,8 +87,8 @@ router.get('/', async (req, res) => {
         // For specific cuisines, search in cuisine field and tags
         query = {
           $or: [
-            { cuisine: { $regex: new RegExp(cuisine, 'i') } },
-            { tags: { $in: [new RegExp(cuisine, 'i')] } }
+            { cuisine: { $regex: containsText(cuisine) } },
+            { tags: { $in: [containsText(cuisine)] } }
           ]
         };
       }
@@ -296,9 +297,9 @@ router.get('/cuisine/:cuisine', async (req, res) => {
       // For American regional cuisines, search by region field
       searchQuery = {
         $or: [
-          { region: { $regex: new RegExp(cuisine, 'i') } },
-          { cuisine: 'American', region: { $regex: new RegExp(cuisine, 'i') } },
-          { tags: { $in: [new RegExp(cuisine.replace(/[-\s]/g, '[-\\s]*'), 'i')] } }
+          { region: { $regex: containsText(cuisine) } },
+          { cuisine: 'American', region: { $regex: containsText(cuisine) } },
+          { tags: { $in: [new RegExp(escapeRegExp(cuisine).replace(/[-\s]/g, '[-\\s]*'), 'i')] } }
         ]
       };
     } else if (cuisine.toLowerCase() === 'indian') {
@@ -313,8 +314,8 @@ router.get('/cuisine/:cuisine', async (req, res) => {
       // For specific cuisines, search in cuisine field and tags
       searchQuery = {
         $or: [
-          { cuisine: { $regex: new RegExp(cuisine, 'i') } },
-          { tags: { $in: [new RegExp(cuisine, 'i')] } }
+          { cuisine: { $regex: containsText(cuisine) } },
+          { tags: { $in: [containsText(cuisine)] } }
         ]
       };
     }
@@ -346,10 +347,11 @@ router.post('/search', async (req, res) => {
     
     const recipes = await recipesCollection.find(publicQuery({
       $or: [
-        { title: { $regex: new RegExp(query, 'i') } },
-        { subtitle: { $regex: new RegExp(query, 'i') } },
-        { tags: { $in: [new RegExp(query, 'i')] } },
-        { cuisine: { $regex: new RegExp(query, 'i') } }
+        { recipe_name: { $regex: containsText(query) } },
+        { title: { $regex: containsText(query) } },
+        { subtitle: { $regex: containsText(query) } },
+        { tags: { $in: [containsText(query)] } },
+        { cuisine: { $regex: containsText(query) } }
       ]
     })).toArray();
 
