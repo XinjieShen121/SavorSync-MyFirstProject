@@ -53,11 +53,11 @@ const CulturalMusic: React.FC<CulturalMusicProps> = ({ recipe }) => {
   const selected = playlists.find(p => p.id === selectedId) || null;
 
   return (
-    <section className="cultural-music" aria-labelledby="cultural-music-title">
+    // The recipe page's "Cook with music" heading names this block, so it has no title of its own
+    <div className="cultural-music">
       <div className="cultural-music__header">
         <i className="bi bi-music-note-beamed cultural-music__icon" aria-hidden="true"></i>
         <div>
-          <h3 id="cultural-music-title" className="cultural-music__title">Cook with music</h3>
           <p className="cultural-music__subtitle">Music from {country} to play while you cook {recipeName}.</p>
         </div>
       </div>
@@ -143,7 +143,7 @@ const CulturalMusic: React.FC<CulturalMusicProps> = ({ recipe }) => {
         <i className="bi bi-spotify" aria-hidden="true"></i>
         Search {country} {genre} on Spotify
       </a>
-    </section>
+    </div>
   );
 };
 

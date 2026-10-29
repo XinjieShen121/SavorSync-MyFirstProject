@@ -97,15 +97,6 @@ const RegisterPage: React.FC = () => {
     }
   };
 
-  const handleGoogleSignUp = () => {
-    // TODO: Implement Google sign-up
-    console.log('Google sign-up clicked');
-  };
-
-  const handleFacebookSignUp = () => {
-    // TODO: Implement Facebook sign-up
-    console.log('Facebook sign-up clicked');
-  };
 
   const handleSignInClick = () => {
     navigate('/login');
@@ -126,11 +117,12 @@ const RegisterPage: React.FC = () => {
       
       <div className="signin-section">
         <div className="signin-container">
-          <h2>Create Account</h2>
+          <h1>Create an account</h1>
           <form className="signin-form" onSubmit={handleSubmit}>
             <div className="form-group">
-              <label>Full Name</label>
+              <label htmlFor="register-name">Full Name</label>
               <input 
+                id="register-name"
                 type="text" 
                 name="name"
                 placeholder="Enter your full name" 
@@ -142,8 +134,9 @@ const RegisterPage: React.FC = () => {
               />
             </div>
             <div className="form-group">
-              <label>Email</label>
+              <label htmlFor="register-email">Email</label>
               <input 
+                id="register-email"
                 type="email" 
                 name="email"
                 placeholder="Enter your email" 
@@ -154,8 +147,9 @@ const RegisterPage: React.FC = () => {
               />
             </div>
             <div className="form-group">
-              <label>Password</label>
+              <label htmlFor="register-password">Password</label>
               <input 
+                id="register-password"
                 type="password" 
                 name="password"
                 placeholder="Create a password " 
@@ -170,8 +164,9 @@ const RegisterPage: React.FC = () => {
               </small>
             </div>
             <div className="form-group">
-              <label>Confirm Password</label>
+              <label htmlFor="register-confirmPassword">Confirm Password</label>
               <input 
+                id="register-confirmPassword"
                 type="password" 
                 name="confirmPassword"
                 placeholder="Confirm your password" 
@@ -189,29 +184,6 @@ const RegisterPage: React.FC = () => {
               {isLoading || loading ? 'Creating Account...' : 'Create Account'}
             </button>
             {error && <p className="error-message">{error}</p>}
-            <div className="social-signin">
-              <p>Or sign up with</p>
-              <div className="social-buttons">
-                <button 
-                  type="button"
-                  className="social-button google"
-                  onClick={handleGoogleSignUp}
-                  disabled={isLoading || loading}
-                >
-                  <i className="bi bi-google"></i>
-                  Google
-                </button>
-                <button 
-                  type="button"
-                  className="social-button facebook"
-                  onClick={handleFacebookSignUp}
-                  disabled={isLoading || loading}
-                >
-                  <i className="bi bi-facebook"></i>
-                  Facebook
-                </button>
-              </div>
-            </div>
             <p className="signup-link">
               Already have an account? <button type="button" onClick={handleSignInClick}>Sign in</button>
             </p>

@@ -373,7 +373,7 @@ a.home-media:hover .home-media__image { transform: scale(1.03); }
   font-weight: var(--weight-bold);
   font-size: var(--text-h4);
   line-height: 24px;
-  color: var(--color-brand-500);
+  color: var(--color-brand-700);
 }
 
 .home-shelf__name {
