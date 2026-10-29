@@ -34,19 +34,27 @@ const getTrending = async (limit) => {
   }
 
   const since = new Date(Date.now() - WINDOW_DAYS * 24 * 60 * 60 * 1000);
-  const [favoriteCounts, reviewStats] = await Promise.all([
-    User.aggregate([
-      { $unwind: '$favorites' },
-      { $group: { _id: '$favorites', count: { $sum: 1 } } },
-    ]),
-    recipeDb.db.collection('reviews').aggregate([
-      { $group: {
-        _id: '$recipeId',
-        recent: { $sum: { $cond: [{ $gte: ['$updatedAt', since] }, 1, 0] } },
-        good: { $sum: { $cond: [{ $gte: ['$rating', 4] }, 1, 0] } },
-      } },
-    ]).toArray(),
-  ]);
+  // If ranking fails (for example an odd favorite or review record), still show
+  // featured dishes rather than an error page
+  let favoriteCounts = [];
+  let reviewStats = [];
+  try {
+    [favoriteCounts, reviewStats] = await Promise.all([
+      User.aggregate([
+        { $unwind: '$favorites' },
+        { $group: { _id: '$favorites', count: { $sum: 1 } } },
+      ]),
+      recipeDb.db.collection('reviews').aggregate([
+        { $group: {
+          _id: '$recipeId',
+          recent: { $sum: { $cond: [{ $gte: ['$updatedAt', since] }, 1, 0] } },
+          good: { $sum: { $cond: [{ $gte: ['$rating', 4] }, 1, 0] } },
+        } },
+      ]).toArray(),
+    ]);
+  } catch (error) {
+    console.error('Trending ranking failed, showing featured dishes only:', error.message);
+  }
 
   const ranked = scoreRecipes(favoriteCounts, reviewStats).slice(0, limit * 2);
   const recipes = recipeDb.db.collection('recipes');
@@ -59,17 +67,18 @@ const getTrending = async (limit) => {
     .map(([id, stats]) => ({ ...byId.get(id), trending: stats }))
     .slice(0, limit);
 
-  // Until enough people have saved or reviewed recipes, fill up with dishes
-  // that have a photo and a story, so the page is never empty
-  if (result.length < limit) {
+  // Until enough people have saved or reviewed recipes, fill up with featured
+  // dishes: ones with a photo first, then any other public recipe, so the page
+  // is never empty (most recipes have no photo yet)
+  const fillWith = async (extra) => {
+    if (result.length >= limit) return;
     const taken = result.map(recipe => recipe._id);
-    const fill = await recipes.find({
-      ...publicOnly,
-      _id: { $nin: taken },
-      $or: [{ image_url: { $nin: [null, ''] } }, { image: { $regex: /^https?:/ } }],
-    }).limit(limit - result.length).toArray();
+    const fill = await recipes.find({ ...publicOnly, ...extra, _id: { $nin: taken } })
+      .limit(limit - result.length).toArray();
     fill.forEach(recipe => result.push({ ...recipe, trending: null }));
-  }
+  };
+  await fillWith({ $or: [{ image_url: { $nin: [null, ''] } }, { image: { $regex: /^https?:/ } }] });
+  await fillWith({});
 
   cache = { at: Date.now(), limit, recipes: result };
   return result;

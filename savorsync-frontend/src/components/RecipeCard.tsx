@@ -28,14 +28,20 @@ interface RecipeCardProps {
   recipe: RecipeCardRecipe;
 }
 
-// Recipe card (design.md 4.3): photo with cuisine badge and heart, title, and
-// at most two facts taken from the recipe's own data.
+// Recipe card (design.md 4.3): an unboxed editorial card. Photo (or type cover)
+// with the heart, then cuisine label, title and facts from the recipe's own data.
 const RecipeCard: React.FC<RecipeCardProps> = ({ recipe }) => {
   const name = recipe.recipe_name || recipe.title || 'Untitled recipe';
   const image = recipe.image_url || recipe.image;
   const minutes = totalMinutes(recipe);
   const difficulty = normalizeDifficulty(recipe.difficulty);
   const diet = recipeDiets(recipe)[0];
+
+  const meta = [
+    minutes !== null ? formatMinutes(minutes) : null,
+    difficulty,
+    diet ? DIET_LABELS[diet] : null,
+  ].filter(Boolean).join(' · ');
 
   return (
     <article className="recipe-card">
@@ -46,23 +52,11 @@ const RecipeCard: React.FC<RecipeCardProps> = ({ recipe }) => {
           ) : (
             <TypeCover title={recipe.cuisine || name} kicker={recipe.region} region={recipe.region} />
           )}
-          {image && recipe.cuisine && <span className="badge badge--cuisine recipe-card__cuisine">{recipe.cuisine}</span>}
         </div>
         <div className="recipe-card__body">
+          {recipe.cuisine && <p className="recipe-card__kicker">{recipe.cuisine}</p>}
           <h3 className="recipe-card__title">{name}</h3>
-          {(minutes !== null || difficulty || diet) && (
-            <p className="recipe-card__meta">
-              {minutes !== null && (
-                <span><i className="bi bi-clock" aria-hidden="true"></i>{formatMinutes(minutes)}</span>
-              )}
-              {difficulty && (
-                <span><i className="bi bi-bar-chart" aria-hidden="true"></i>{difficulty}</span>
-              )}
-              {(minutes === null || !difficulty) && diet && (
-                <span className="badge badge--diet">{DIET_LABELS[diet]}</span>
-              )}
-            </p>
-          )}
+          {meta && <p className="recipe-card__meta">{meta}</p>}
         </div>
       </Link>
       <div className="recipe-card__favorite">

@@ -4,6 +4,7 @@ import { useUser } from '../../context/UserContext';
 import { getAllRecipes, getTrendingRecipes } from '../../services/apiRecipe';
 import { getAllPosts } from '../../services/apiPosts';
 import RecipeCard from '../../components/RecipeCard';
+import PhotoCredit, { type ImageCredit } from '../../components/PhotoCredit';
 import TypeCover from '../../components/TypeCover';
 import FavoriteButton from '../../components/FavoriteButton';
 import QuickStartModal from '../QuickStartPage/QuickStartModalMUI';
@@ -16,14 +17,6 @@ import './HomePage.css';
 // this page comes from recipe data; sections without data hide themselves.
 
 type LoadState = 'loading' | 'error' | 'ready';
-
-interface ImageCredit {
-  author?: string;
-  license?: string;
-  license_url?: string;
-  source_url?: string;
-  source?: string;
-}
 
 interface HomeRecipe {
   _id: string;
@@ -125,24 +118,6 @@ const quickRoutes = (recipes: HomeRecipe[]) => [
   { label: 'Vegetarian', to: '/all-recipes?diet=vegetarian', count: recipes.filter(r => recipeDiets(r).includes('vegetarian')).length },
   { label: 'Easy', to: '/all-recipes?difficulty=Easy', count: recipes.filter(r => normalizeDifficulty(r.difficulty) === 'Easy').length },
 ].filter(route => route.count > 0);
-
-const PhotoCredit: React.FC<{ credit?: ImageCredit }> = ({ credit }) => {
-  if (!credit?.source_url) return null;
-  return (
-    <p className="home-credit">
-      Photo: <a href={credit.source_url} target="_blank" rel="noopener noreferrer">{credit.author || 'Unknown author'}</a>
-      {credit.license && (
-        <>
-          {', '}
-          {credit.license_url
-            ? <a href={credit.license_url} target="_blank" rel="noopener noreferrer">{credit.license}</a>
-            : credit.license}
-        </>
-      )}
-      {credit.source && ` via ${credit.source}`}
-    </p>
-  );
-};
 
 // Photo when the recipe has one, otherwise the typeset cover
 const DishMedia: React.FC<{ recipe: HomeRecipe; size?: 'card' | 'hero' }> = ({ recipe, size = 'card' }) => {

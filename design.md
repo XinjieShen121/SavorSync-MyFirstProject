@@ -1,6 +1,6 @@
 # SavorSync Design System
 
-Version 1.1 · October 2026
+Version 1.2 · October 2026
 
 This is the single source of truth for how SavorSync looks and behaves. Every page, component and CSS file uses the tokens and patterns below. If something you need is not here, add it to this file first, then build it.
 
@@ -421,13 +421,15 @@ Anatomy (top to bottom): photo 4:3 with cuisine badge top-left and heart icon bu
 - No tags or subtitles on the card. Grid: 1 column under 600px, 2 at 600, 3 at 900, 4 at 1200; gap `--space-6`.
 - Loading: skeleton card (4.7).
 
+**Update (1.2):** cards are unboxed: no border, shadow or white panel. The 4:3 photo (or type cover) has `--radius-md` and the heart in its corner; below it sit a cuisine kicker, the title in `--font-display` 700 (`--text-h4`, 24px from 900px) and one line of facts ("25 min · Easy · Vegetarian"). Hover zooms the photo to 1.03 and underlines the title.
+
 ### 4.4 Cultural story card
 
 A compact teaser of the dish's story, shown above the ingredients on the recipe page.
 
-- Container: `surface-warm` background, `--radius-md`, padding `--space-5`, left 4px bar in `brand-500`.
-- Overline: `bi-globe2` icon + "The story" in `--text-xs` uppercase, `brand-800`.
-- Body: the story clamped to **2 lines** (`-webkit-line-clamp: 2`), `--text-body-lg`, `text`.
+- Container: no card. A 1px `--color-border` top rule with `--space-6` above the label (4.11 section rule).
+- Label: "The story" as a 4.11 kicker (`--text-xs` 600 uppercase, +0.08em, `brand-800`).
+- Body: an excerpt in `--font-display` 400, `--text-h4` on 32px leading, `text`, clamped to **3 lines**.
 - Actions row: Ghost button "Read the story" (expands in place to full text, max `--container-reading`, `aria-expanded`), and, if a video exists, Ghost button `bi-play-circle` "Watch (2 min)" that opens the video in a dialog.
 - AI insight: inside the expanded story, Secondary button `bi-stars` "Ask about this dish" opens preset questions as chips ("What's the story behind it?", "Why this ingredient?", "How is it served at home?"). The AI answer appears below with an "AI-generated" `--text-xs` label in `text-muted`.
 - If no story exists, the card is not shown (no placeholder text).
@@ -459,17 +461,21 @@ A full-screen, distraction-free view for cooking one step at a time.
 
 **Entry:** the docked Start Cooking button (5.1) or a step number. Opens as a full-screen layer (`--z-overlay`), `surface` background, slide up over `--duration-slow`. Requests a screen Wake Lock (`navigator.wakeLock.request('screen')`) and releases it on exit.
 
-**Layout (top to bottom):**
-1. **Top bar** (56px): Icon button `bi-x-lg` "Exit cook mode" left; recipe title center (`--text-sm` 600, 1 line); Icon button `bi-list-check` "Ingredients" right (opens the ingredient list as a sheet, with the 4.5 checkboxes).
-2. **Progress:** segmented bar, one segment per step, 4px high, `--radius-pill`; done segments `brand-500`, current `brand-700`, upcoming `border`. Below it "Step 3 of 8" in `--text-sm` `text-secondary`, with `aria-live="polite"`.
-3. **Step body** (centered, max width `--container-reading`, padding `--space-6`): step text in `--text-step`, `text`. Ingredients named in the step are bolded with their quantity ("**2 tbsp** soy sauce"). Swapped ingredients use the 4.5 style.
-4. **Timer chip** (when the step contains a duration like "10 minutes"): Secondary button `bi-stopwatch` "Start 10:00 timer". Running: `brand-50` background, live countdown, pause and reset icons. At zero: a sound plus vibration, and the chip turns `success` with "Done". Timers keep running when moving between steps and show as small chips in the top bar.
-5. **Tip or fun fact** (when present for the step): `saffron-100` box, `--radius-md`, `bi-lightbulb` in `saffron-700`, `--text-body`. One per step at most.
-6. **Bottom controls** (docked, 88px including safe-area inset, `--shadow-2`): Secondary large "Back" (`bi-arrow-left`) on the left, Primary large "Next step" (`bi-arrow-right`) filling the remaining width. On the last step the primary becomes "Finish".
+**Layout:** from 900px, two columns inside a 1360px frame: a 360px side column and the step. Under 900px, one column.
+1. **Top bar** (56px): Ghost "Exit" with `bi-x-lg` on the left; recipe title in the center, with running timers beside it as small chips ("Step 1 · 6:42"); on phones a Secondary small "Ingredients" button on the right (opens the ingredient list as a sheet).
+2. **Progress line:** 4px, full width under the top bar, `herb-700` on `surface-sunken`, `role="progressbar"`.
+3. **The finished dish, always in view** (when the recipe has a photo): from 900px a 16:10 photo at the top of the side column with the caption "What you're making"; on phones a 150px banner with the step number on it ("3 · Step 3 of 6"). Without a photo, the step number shows above the text instead.
+4. **Side column (900px and up):** the dish photo, then "All ingredients · N of M ready" and the full checklist with a round ingredient photo per row; the ingredients this step uses are tinted `brand-50`.
+5. **Step:** a large Playfair `brand-700` number with the kicker "Step 3 of 6" (a heading, `aria-live="polite"`), then the step text in `--text-step` (32px from 900px). Ingredients named in the step are bold in `brand-800`; swapped ones show their new name and quantity in `herb-700` (4.5).
+6. **For this step:** photo cards of the ingredients the step uses, with quantity and name (150 x 112 from 900px; 80px circles in a scrolling row on phones). Photos come from the ingredient photo library (`src/data/ingredientPhotos.ts`, free-licensed Wikimedia Commons photos). An ingredient without a photo shows its first letter on a `surface-warm` tile. Never AI-generated pictures.
+7. **Timer chip** (when the step contains a duration like "10 minutes"): Secondary button `bi-stopwatch` "Start 10:00 timer". Running: `brand-50` background, live countdown, pause and reset icons. At zero: a sound plus vibration, and the chip turns `success` with "Done". Timers keep running between steps and show in the top bar.
+8. **Tip or fun fact** (when present for the step): `saffron-100` box, `--radius-md`, `bi-lightbulb`. One per step at most.
+9. **Bottom controls:** from 900px, on a hairline: Secondary "Back", then "Up next · Step 4" with the next step's text on one line, then Primary "Next step". On phones, "Next: …" on one line above Back and Next. On the last step the primary becomes "Finish".
+10. **Photo credits:** one `--text-xs` line under the controls naming the author and license of every photo on screen, linked to its Commons page.
 
 **Interaction:** swipe left or right, keyboard arrows, and Space for next; tapping the step text also advances. Step text changes with a 200ms cross-fade (none if reduced motion). Exiting mid-recipe asks nothing; the current step is remembered per recipe in `localStorage` and offered as "Resume at step 3" next time.
 
-**Finish screen:** `bi-check-circle-fill` in `success`, "Enjoy your {dish}!", and three actions: Primary "Share a photo" (to Create Post with the recipe linked), Secondary "Rate this recipe", Ghost "Back to recipe".
+**Finish screen:** the dish photo (or `bi-check-circle-fill` in `success` without one), "Enjoy your {dish}!", and three actions: Primary "Share a photo" (to Create Post with the recipe linked), Secondary "Rate this recipe", Ghost "Back to recipe".
 
 **Accessibility:** each step is a heading for screen readers ("Step 3 of 8"); all controls are at least 56px high; contrast meets AA at arm's length (text never lighter than `text`).
 
@@ -560,12 +566,14 @@ Used on the home page and any page that reads like a magazine feature. Component
 
 Top to bottom on mobile; two columns from 900px.
 
-1. **Hero:** 16:9 photo (`--radius-md` on desktop, full-bleed on mobile) with cuisine badge.
-2. **Header:** title (`--text-h1`), one-line subtitle (`text-secondary`), facts row (time, servings, difficulty from data only, with icons, `--text-sm`), actions row: heart, share, print as Icon buttons.
+1. **Hero (4.11):** from 900px, a split hero with the media at 7fr beside the header at 5fr; on phones the media comes first, full-bleed. The media is a 4:3 photo (`--radius-md` from 600px) with its photo credit, or the type cover (hero size) when there's no photo.
+2. **Header:** kicker (cuisine · region), title (`--font-display` 700, clamp 36 to 56px), the subtitle as a Deck (2.2), then a facts row under a hairline rule: total time first ("25 min total", 600, `text`), then "Prep 10 min · Cook 15 min", servings, difficulty and rating, from data only. Actions row below: from 900px a Primary "Start cooking" (or "Continue at step N" / "Resume at step N"), then heart, share, print as Icon buttons.
 3. **Cultural story card** (4.4).
-4. **Two columns from 900px:** left (40%) Ingredients with the diet selector and swap pattern (4.5), sticky under the nav; right (60%) Steps as a numbered list (`--text-body-lg`, step numbers in a 32px `brand-50` circle with `brand-800` number), with fun facts as 4.6-style tip boxes inline.
+4. **Ingredients and steps:** from 900px two columns under a hairline rule, ingredients (40%) sticky under the nav, steps (60%). Under 900px a sticky "Ingredients · 3/6 | Steps · 2/6" switch shows one list at a time, with a thin herb progress line.
+   - **Ingredients:** heading with "N of M ready", one tool row (servings stepper, Metric/US segmented control), then "Make it" diet chips (4.5) with "N ingredients swapped. The steps are updated too. Undo all". Rows sit on hairlines: checkbox, quantity, name, and a "Swap" pill (`bi-arrow-left-right` + text) when a swap exists. A swapped row shows "Vegetarian swap, instead of X · Undo" in `herb-700` under the name. Swaps that fail to load are simply not offered; no error box.
+   - **Steps:** heading with Reset (shown once anything is ticked), a progress bar and "N of M steps done". Each step is a real checkbox drawn as a 28px circle (`herb-700` filled when done), a "Step N" kicker and `--text-body-lg` text; done steps turn `text-muted`. The first unticked step, once any is ticked, is "Step N · now": a `surface` panel with a 1.5px `brand-700` ring and `--text-h4` text. Ticks are saved per recipe in this browser. After the steps, the "Good to know" aside (fun facts).
 5. **More sections** as anchors, not tabs: "Cook with music" (Spotify embed), "Video" (if present), "From the community" (posts linked to this recipe).
-6. **Docked Start Cooking button:** a bar fixed to the bottom of the viewport (`--z-dock`), `surface` at 96% opacity with backdrop blur, `--shadow-2`, padding `--space-3 var(--space-4)` plus safe-area inset. Contains a full-width Primary large button `bi-play-fill` "Start cooking" that opens cook mode (4.6); on desktop the bar is centered with max width 480px and `--radius-pill`. It hides while the footer is visible and while cook mode is open. Page content gets bottom padding equal to the bar height so nothing is covered.
+6. **Docked Start Cooking button (phones and tablets only, under 900px; desktop uses the header button):** a bar fixed to the bottom of the viewport (`--z-dock`), `surface` at 96% opacity with backdrop blur, `--shadow-2`, padding `--space-3 var(--space-4)` plus safe-area inset. Contains a full-width Primary large button `bi-play-fill` "Start cooking" that opens cook mode (4.6). It hides while the footer is visible and while cook mode is open. Page content gets bottom padding equal to the bar height so nothing is covered.
 
 ### 5.2 Home
 
@@ -584,7 +592,11 @@ Sections without data are hidden; loading and errors follow 4.7.
 
 ### 5.3 List pages (All recipes, Cuisine, Trending)
 
-Page title (`--text-h1`) and a one-line description, filter bar (4.2) and search, result count (`--text-sm`, `text-secondary`, `aria-live="polite"`), the card grid (4.3), then "Load more" as a Secondary button (or infinite scroll with a visible fallback button). States per 4.7.
+**All recipes:** an editorial header (4.11): kicker "The collection · N dishes from M cuisines", a display headline and a Deck, with the search field beside it from 900px (Enter searches). Then one toolbar between two hairline rules: the cuisine chips in a scrolling row (the chosen one filled in `text`), then a Secondary small "Filters (n)" button and a "Sort" select (Featured, Quickest first, A to Z) on the right. Diet, difficulty and time live in the Filters popover (desktop) or bottom sheet (under 600px), with "Clear" and "Show N recipes". Below the toolbar, a summary line: "**9 recipes**, Italian", each panel filter as an `herb-50` pill with ✕ to remove it, and "Clear all". Every filter and the sort live in the URL.
+
+**Trending:** an editorial header (kicker "Trending now", headline "What everyone is cooking", Deck "Ranked by how often cooks save and review each dish."). Number one is a split lead on a hairline rule: photo or type cover (7fr) beside a large `brand-700` Playfair numeral, kicker, title, Deck, a facts row ("14 saves" in bold, time, difficulty) and a Primary "Cook this dish". Numbers two to nine follow as a numbered chart, two columns from 900px: numeral, 4:3 thumbnail, kicker, title and one meta line ("13 saves · 1 cooked this month · 25 min · Easy"). Counts are the API's real numbers (all-time saves, reviews in the last 30 days). With no rankings yet, the same layout shows featured dishes with no numerals and the kicker "Featured dishes", so the page never claims a rank it doesn't have. Anything past nine shows as cards under "Also worth cooking".
+
+All list pages use the card grid (4.3): 1, 2, then 3 columns from 900px (`--space-8` column gap, `--space-12` row gap), then "Load more" as a Secondary button. States per 4.7.
 
 ### 5.4 Community, post and profile
 
@@ -651,3 +663,4 @@ Use this when replacing hardcoded values (stage 2).
 | --- | --- | --- |
 | 1.0 | 2026-10-20 | First version, based on the existing SavorSync brand (`#FF6B35`, `#FBE7D2`, Playfair Display, Poppins) with accessible action colors, one body font, and the component patterns above. |
 | 1.1 | 2026-10-29 | Editorial additions from the home page redesign (PR #8): Deck type style and Playfair italic (2.2), type cover and photo credit replacing the grey photo fallback (2.8, 4.11), section rules (4.11), and the new home page structure (5.2). |
+| 1.2 | 2026-10-29 | Recipe page in the 4.11 style: split hero with type cover, kicker and deck, total time first, story as a ruled excerpt (4.4, 5.1), fun facts in one "Good to know" aside. All recipes: cuisine row visible, other filters behind a "Filters (n)" button (5.3). Recipe page cooking flow: step and ingredient checkboxes with progress, "Step N · now", clear Swap pills, phone Ingredients/Steps switch, header cook button on desktop (5.1). Trending: split lead and numbered chart (5.3). Cook mode: dish photo always in view, ingredient photos per step, side ingredient list from 900px, up-next preview, photo credits (4.6). |

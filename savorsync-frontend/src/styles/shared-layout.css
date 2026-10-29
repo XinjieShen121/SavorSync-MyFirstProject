@@ -146,11 +146,11 @@
   box-shadow: var(--shadow-2);
 }
 
-/* Unified Recipe Grid (design.md 4.3): 1, 2, 3, then 4 columns */
+/* Unified Recipe Grid (design.md 4.3): 1, 2, then 3 columns */
 .recipe-page-grid {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  gap: var(--space-6);
+  gap: var(--space-10) var(--space-6);
   margin-bottom: var(--space-10);
   align-items: stretch;
   width: 100%;
@@ -161,11 +161,11 @@
 }
 
 @media (min-width: 900px) {
-  .recipe-page-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-}
-
-@media (min-width: 1200px) {
-  .recipe-page-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .recipe-page-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    column-gap: var(--space-8);
+    row-gap: var(--space-12);
+  }
 }
 
 /* Ensure consistent spacing even with few recipes */
@@ -326,11 +326,6 @@
   .filter-btn {
     padding: 10px 20px;
     font-size: 13px;
-  }
-  
-  .recipe-page-grid {
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: 20px;
   }
   
   .recipe-page-filters {

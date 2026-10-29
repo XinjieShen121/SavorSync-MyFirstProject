@@ -30,7 +30,7 @@ SavorSync is my answer:
 ### 🧭 **Discover Global Recipes**
 - Browse by cuisine (Chinese, Indian, Mediterranean, etc.) and U.S. regional styles (Southern, Tex-Mex, New England)
 - Filter by dietary needs, difficulty, or cooking time
-- Step-by-step instructions with cultural fun facts and cooking tips
+- Step-by-step instructions, with the dish's fun facts gathered in a "Good to know" note beside the steps
 
 ### 🧠 **AI-Powered Cultural Insights**
 - Ask questions like *"What's the story behind this dish?"* or *"Why is this ingredient important?"*
@@ -172,7 +172,7 @@ npm run dev
 
 - **Mobile App** for cooking on the go
 - **Voice-Guided Cooking** for hands-free recipe navigation
-- **Meal Planning** across the week
+- **Weekly meal plans**: not built yet. For now SavorSync is about discovering recipes and cooking them, not planning a week of meals.
 - **Advanced AI Cooking Assistant** for personalized recommendations
 
 ---

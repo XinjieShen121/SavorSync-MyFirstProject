@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
+import { Drawer, Popover, useMediaQuery } from '@mui/material';
 import { getAllRecipes } from '../../services/apiRecipe';
 import RecipeCard, { RecipeCardRecipe } from '../../components/RecipeCard';
 import { EmptyState, ErrorState, LoadingState, RecipeGridSkeleton } from '../../components/ui/States';
 import {
-  Diet, DIET_LABELS, recipeDiets, normalizeDifficulty, TimeBucket, TIME_LABELS, timeBucket,
+  Diet, DIET_LABELS, recipeDiets, normalizeDifficulty, TimeBucket, TIME_LABELS, timeBucket, totalMinutes,
 } from '../../utils/recipeFacts';
 import '../../styles/shared-layout.css';
 import '../../styles/browse.css';
@@ -17,6 +18,8 @@ const PAGE_SIZE = 24;
 const DIFFICULTIES = ['Easy', 'Medium', 'Hard'];
 const DIETS = Object.keys(DIET_LABELS) as Diet[];
 const TIMES = Object.keys(TIME_LABELS) as TimeBucket[];
+const SORTS: Record<string, string> = { '': 'Featured', quickest: 'Quickest first', az: 'A to Z' };
+const recipeName = (recipe: BrowseRecipe) => recipe.recipe_name || recipe.title || '';
 
 const matchesQuery = (recipe: BrowseRecipe, query: string) => {
   const needle = query.toLowerCase();
@@ -33,11 +36,15 @@ const AllRecipesPage: React.FC = () => {
   const diet = searchParams.get('diet') || '';
   const difficulty = searchParams.get('difficulty') || '';
   const time = searchParams.get('time') || '';
+  const sort = searchParams.get('sort') || '';
 
   const [recipes, setRecipes] = useState<BrowseRecipe[]>([]);
   const [state, setState] = useState<'loading' | 'error' | 'ready'>('loading');
   const [searchText, setSearchText] = useState(query);
   const [shown, setShown] = useState(PAGE_SIZE);
+  // The Filters panel: a popover under the button on desktop, a bottom sheet on phones
+  const [filtersAnchor, setFiltersAnchor] = useState<HTMLElement | null>(null);
+  const isMobile = useMediaQuery('(max-width: 599px)');
 
   const load = useCallback(async () => {
     setState('loading');
@@ -51,7 +58,7 @@ const AllRecipesPage: React.FC = () => {
 
   useEffect(() => { load(); }, [load]);
   useEffect(() => { setSearchText(query); }, [query]);
-  useEffect(() => { setShown(PAGE_SIZE); }, [query, cuisine, diet, difficulty, time]);
+  useEffect(() => { setShown(PAGE_SIZE); }, [query, cuisine, diet, difficulty, time, sort]);
 
   const setParam = (key: string, value: string) => {
     const next = new URLSearchParams(searchParams);
@@ -66,9 +73,10 @@ const AllRecipesPage: React.FC = () => {
     setParam('q', searchText.trim());
   };
 
+  // Clears search and filters but keeps the chosen sort
   const clearAll = () => {
     setSearchText('');
-    setSearchParams({}, { replace: true });
+    setSearchParams(sort ? { sort } : {}, { replace: true });
   };
 
   // Only offer a chip when at least one recipe has it (design.md 4.2)
@@ -93,7 +101,7 @@ const AllRecipesPage: React.FC = () => {
     };
   }, [recipes]);
 
-  const results = useMemo(() => recipes.filter(recipe =>
+  const filtered = useMemo(() => recipes.filter(recipe =>
     (!query || matchesQuery(recipe, query)) &&
     (!cuisine || recipe.cuisine === cuisine) &&
     (!diet || recipeDiets(recipe).includes(diet as Diet)) &&
@@ -101,7 +109,28 @@ const AllRecipesPage: React.FC = () => {
     (!time || timeBucket(recipe) === time)
   ), [recipes, query, cuisine, diet, difficulty, time]);
 
+  // Featured keeps the API's order; recipes without a time sort last
+  const results = useMemo(() => {
+    if (sort === 'az') return [...filtered].sort((a, b) => recipeName(a).localeCompare(recipeName(b)));
+    if (sort === 'quickest') {
+      return [...filtered].sort((a, b) => (totalMinutes(a) ?? Infinity) - (totalMinutes(b) ?? Infinity));
+    }
+    return filtered;
+  }, [filtered, sort]);
+
   const activeFilters = [cuisine, diet, difficulty, time].filter(Boolean).length + (query ? 1 : 0);
+  // Filters behind the button: diet, difficulty and time (search and cuisine stay visible)
+  const panelFilters = [
+    diet && { key: 'diet', label: DIET_LABELS[diet as Diet] || diet },
+    difficulty && { key: 'difficulty', label: difficulty },
+    time && { key: 'time', label: TIME_LABELS[time as TimeBucket] || time },
+  ].filter(Boolean) as { key: string; label: string }[];
+  const hasPanelOptions = options.diets.length + options.difficulties.length + options.times.length > 0;
+  const clearPanelFilters = () => {
+    const next = new URLSearchParams(searchParams);
+    ['diet', 'difficulty', 'time'].forEach(key => next.delete(key));
+    setSearchParams(next, { replace: true });
+  };
 
   const chip = (key: string, value: string, label: string, current: string) => (
     <button
@@ -116,79 +145,130 @@ const AllRecipesPage: React.FC = () => {
     </button>
   );
 
+  const filtersPanel = (
+    <div className="browse-panel" id="browse-filters-panel" role="dialog" aria-labelledby="browse-panel-title">
+      <div className="browse-panel__head">
+        <h2 className="browse-panel__title" id="browse-panel-title">Filters</h2>
+        <button type="button" className="btn btn--icon btn--sm" aria-label="Close filters" onClick={() => setFiltersAnchor(null)}>
+          <i className="bi bi-x-lg" aria-hidden="true"></i>
+        </button>
+      </div>
+      {options.diets.length > 0 && (
+        <div className="browse-panel__group" role="group" aria-label="Diet">
+          <span className="browse__filter-label">Diet</span>
+          <div className="browse__chips">
+            {options.diets.map(d => chip('diet', d, DIET_LABELS[d], diet))}
+          </div>
+        </div>
+      )}
+      {options.difficulties.length > 0 && (
+        <div className="browse-panel__group" role="group" aria-label="Difficulty">
+          <span className="browse__filter-label">Difficulty</span>
+          <div className="browse__chips">
+            {options.difficulties.map(d => chip('difficulty', d, d, difficulty))}
+          </div>
+        </div>
+      )}
+      {options.times.length > 0 && (
+        <div className="browse-panel__group" role="group" aria-label="Total time">
+          <span className="browse__filter-label">Time</span>
+          <div className="browse__chips">
+            {options.times.map(t => chip('time', t, TIME_LABELS[t], time))}
+          </div>
+        </div>
+      )}
+      <div className="browse-panel__foot">
+        <button type="button" className="btn btn--ghost btn--sm" onClick={clearPanelFilters} disabled={panelFilters.length === 0}>
+          Clear
+        </button>
+        <button type="button" className="btn btn--primary" onClick={() => setFiltersAnchor(null)}>
+          Show {results.length} {results.length === 1 ? 'recipe' : 'recipes'}
+        </button>
+      </div>
+    </div>
+  );
+
   return (
     <div className="browse">
       <div className="browse__inner">
-        <Link to="/" className="btn btn--ghost btn--sm browse__back">
-          <i className="bi bi-arrow-left" aria-hidden="true"></i>
-          Home
-        </Link>
-        <header className="browse__header">
-          <h1 className="browse__title">All recipes</h1>
-          <p className="browse__lead">Dishes from around the world, each with the story behind it.</p>
+        {/* Editorial header with search beside it (design.md 5.3) */}
+        <header className="browse__intro">
+          <div>
+            <p className="browse__kicker">
+              The collection{state === 'ready' && recipes.length > 0 && ` · ${recipes.length} dishes from ${options.cuisines.length} cuisines`}
+            </p>
+            <h1 className="browse__title">Recipes from around the world</h1>
+            <p className="browse__deck">Each one with the story of where it comes from.</p>
+          </div>
+          <form className="browse__search" role="search" onSubmit={submitSearch}>
+            <i className="bi bi-search browse__search-icon" aria-hidden="true"></i>
+            <label htmlFor="browse-search" className="visually-hidden">Search recipes</label>
+            <input
+              id="browse-search"
+              type="search"
+              className="browse__search-input"
+              placeholder="Search a dish, ingredient or cuisine"
+              value={searchText}
+              onChange={event => setSearchText(event.target.value)}
+            />
+            <button type="submit" className="visually-hidden">Search</button>
+          </form>
         </header>
 
-        <form className="browse__search" role="search" onSubmit={submitSearch}>
-          <i className="bi bi-search browse__search-icon" aria-hidden="true"></i>
-          <label htmlFor="browse-search" className="visually-hidden">Search recipes</label>
-          <input
-            id="browse-search"
-            type="search"
-            className="browse__search-input"
-            placeholder="Search a dish, ingredient or cuisine"
-            value={searchText}
-            onChange={event => setSearchText(event.target.value)}
-          />
-          <button type="submit" className="btn btn--primary browse__search-button">Search</button>
-        </form>
-
         {state !== 'error' && (
-          <div className="browse__filters" aria-label="Filters">
+          <div className="browse__toolbar">
             {options.cuisines.length > 0 && (
-              <div className="browse__filter-row" role="group" aria-label="Cuisine">
-                <span className="browse__filter-label">Cuisine</span>
-                <div className="browse__chips">
-                  <button type="button" className="chip" aria-pressed={!cuisine} onClick={() => setParam('cuisine', '')}>
-                    {!cuisine && <i className="bi bi-check" aria-hidden="true"></i>}
-                    All
+              <div className="browse__cuisines" role="group" aria-label="Cuisine">
+                <button type="button" className="chip" aria-pressed={!cuisine} onClick={() => setParam('cuisine', '')}>All</button>
+                {options.cuisines.map(name => (
+                  <button key={name} type="button" className="chip" aria-pressed={cuisine === name} onClick={() => toggleParam('cuisine', name, cuisine)}>
+                    {name}
                   </button>
-                  {options.cuisines.map(name => chip('cuisine', name, name, cuisine))}
-                </div>
+                ))}
               </div>
             )}
-            {options.diets.length > 0 && (
-              <div className="browse__filter-row" role="group" aria-label="Diet">
-                <span className="browse__filter-label">Diet</span>
-                <div className="browse__chips">
-                  {options.diets.map(d => chip('diet', d, DIET_LABELS[d], diet))}
-                </div>
-              </div>
-            )}
-            {options.difficulties.length > 0 && (
-              <div className="browse__filter-row" role="group" aria-label="Difficulty">
-                <span className="browse__filter-label">Difficulty</span>
-                <div className="browse__chips">
-                  {options.difficulties.map(d => chip('difficulty', d, d, difficulty))}
-                </div>
-              </div>
-            )}
-            {options.times.length > 0 && (
-              <div className="browse__filter-row" role="group" aria-label="Total time">
-                <span className="browse__filter-label">Time</span>
-                <div className="browse__chips">
-                  {options.times.map(t => chip('time', t, TIME_LABELS[t], time))}
-                </div>
-              </div>
-            )}
+            <div className="browse__tools">
+              {hasPanelOptions && (
+                <button
+                  type="button"
+                  className="btn btn--secondary btn--sm browse__filters-button"
+                  aria-haspopup="dialog"
+                  aria-expanded={!!filtersAnchor}
+                  aria-controls="browse-filters-panel"
+                  onClick={event => setFiltersAnchor(event.currentTarget)}
+                >
+                  <i className="bi bi-sliders" aria-hidden="true"></i>
+                  Filters{panelFilters.length > 0 && ` (${panelFilters.length})`}
+                </button>
+              )}
+              <label className="browse__sort">
+                <span>Sort</span>
+                <select value={sort} onChange={event => setParam('sort', event.target.value)}>
+                  {Object.entries(SORTS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+                </select>
+              </label>
+            </div>
           </div>
         )}
 
         {state === 'ready' && (
-          <div className="browse__count-row">
+          <div className="browse__summary">
             <p className="browse__count" aria-live="polite">
-              {results.length} {results.length === 1 ? 'recipe' : 'recipes'}
+              <strong>{results.length} {results.length === 1 ? 'recipe' : 'recipes'}</strong>
               {query && <> for &ldquo;{query}&rdquo;</>}
+              {cuisine && <>, {cuisine}</>}
             </p>
+            {panelFilters.map(({ key, label }) => (
+              <button
+                key={key}
+                type="button"
+                className="browse__active"
+                aria-label={`Remove filter: ${label}`}
+                onClick={() => setParam(key, '')}
+              >
+                {label}<i className="bi bi-x" aria-hidden="true"></i>
+              </button>
+            ))}
             {activeFilters > 0 && (
               <button type="button" className="btn btn--ghost btn--sm" onClick={clearAll}>
                 Clear all
@@ -240,6 +320,23 @@ const AllRecipesPage: React.FC = () => {
           </>
         )}
       </div>
+
+      {isMobile ? (
+        <Drawer anchor="bottom" open={!!filtersAnchor} onClose={() => setFiltersAnchor(null)} PaperProps={{ className: 'browse-sheet' }}>
+          {filtersPanel}
+        </Drawer>
+      ) : (
+        <Popover
+          open={!!filtersAnchor}
+          anchorEl={filtersAnchor}
+          onClose={() => setFiltersAnchor(null)}
+          anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
+          transformOrigin={{ vertical: 'top', horizontal: 'left' }}
+          PaperProps={{ className: 'browse-popover' }}
+        >
+          {filtersPanel}
+        </Popover>
+      )}
     </div>
   );
 };

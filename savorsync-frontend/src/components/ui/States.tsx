@@ -55,9 +55,12 @@ export const ProfileSkeleton: React.FC = () => (
 export const RecipeDetailSkeleton: React.FC = () => (
   <div className="skeleton-detail" aria-hidden="true">
     <Skeleton variant="image" />
-    <Skeleton width="60%" height="2rem" />
-    <Skeleton width="40%" />
-    {Array.from({ length: 6 }, (_, i) => <Skeleton key={i} width={`${70 - i * 5}%`} />)}
+    <div className="skeleton-detail__text">
+      <Skeleton width="30%" />
+      <Skeleton width="85%" height="3rem" />
+      <Skeleton width="60%" />
+      {Array.from({ length: 4 }, (_, i) => <Skeleton key={i} width={`${70 - i * 10}%`} />)}
+    </div>
   </div>
 );
 

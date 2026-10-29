@@ -27,6 +27,24 @@ type Status = 'idle' | 'loading' | 'error' | 'ready';
 
 // Cook with what I have (README "AI recipe generation"): list your ingredients,
 // get a recipe in SavorSync's format, and save it to your recipes.
+// The signed-out preview: a short, hand-checked sample, always labeled "Example"
+const SAMPLE = {
+  from: ['eggs', 'leftover rice', 'spring onions'],
+  cuisine: 'Chinese',
+  recipe_name: 'Egg fried rice',
+  subtitle: 'Day-old rice, eggs and spring onions tossed in a hot pan',
+  time: '15 min',
+  servings: 2,
+  difficulty: 'Easy',
+  ingredients: ['2 cups cooked rice, cold', '2 eggs, beaten', '3 spring onions, sliced', '1 tbsp soy sauce'],
+  steps: [
+    'Heat oil in a wok or large pan until shimmering.',
+    'Scramble the eggs until just set, then push them to one side.',
+    'Add the rice and stir-fry until hot and lightly toasted.',
+    'Toss in the soy sauce and spring onions and serve.',
+  ],
+};
+
 const CookWithAIPage: React.FC = () => {
   const { isAuthenticated } = useUser();
   const { showToast } = useToast();
@@ -103,13 +121,42 @@ const CookWithAIPage: React.FC = () => {
   if (!isAuthenticated) {
     return (
       <div className="ai-cook">
-        <div className="ai-cook__inner ai-cook__inner--narrow">
-          <div className="ai-cook__signin">
-            <span className="ai-cook__signin-icon" aria-hidden="true"><i className="bi bi-stars"></i></span>
-            <h1 className="ai-cook__title">Cook with what you have</h1>
-            <p className="ai-cook__lead">Tell us what's in your kitchen and AI writes a recipe around it. Sign in to start.</p>
-            <Link to="/login" state={{ from: '/cook-with-ai' }} className="btn btn--primary">Sign in to start</Link>
-            <Link to="/register" className="btn btn--ghost">Create an account</Link>
+        <div className="ai-cook__inner">
+          <div className="ai-cook__layout ai-cook__layout--preview">
+            <div className="ai-cook__signin">
+              <span className="ai-cook__signin-icon" aria-hidden="true"><i className="bi bi-stars"></i></span>
+              <h1 className="ai-cook__title">Cook with what you have</h1>
+              <p className="ai-cook__lead">Tell us what's in your kitchen and AI writes a recipe around it, with its story. Sign in to start.</p>
+              <Link to="/login" state={{ from: '/cook-with-ai' }} className="btn btn--primary">Sign in to start</Link>
+              <Link to="/register" className="btn btn--ghost">Create an account</Link>
+            </div>
+
+            {/* A fixed sample so visitors can see what they'd get before signing in. No API call. */}
+            <article className="ai-cook__card ai-cook__card--example" aria-labelledby="ai-example-title">
+              <div className="ai-cook__example-head">
+                <span className="badge ai-cook__example-badge">Example</span>
+                <p className="ai-cook__example-input">
+                  From: {SAMPLE.from.join(', ')}
+                </p>
+              </div>
+              <p className="ai-cook__overline">{SAMPLE.cuisine}</p>
+              <h2 className="ai-cook__recipe-title" id="ai-example-title">{SAMPLE.recipe_name}</h2>
+              <p className="ai-cook__subtitle">{SAMPLE.subtitle}</p>
+              <ul className="ai-cook__facts">
+                <li><i className="bi bi-clock" aria-hidden="true"></i>{SAMPLE.time}</li>
+                <li><i className="bi bi-people" aria-hidden="true"></i>{SAMPLE.servings} servings</li>
+                <li><i className="bi bi-bar-chart" aria-hidden="true"></i>{SAMPLE.difficulty}</li>
+              </ul>
+              <h3 className="ai-cook__section">Ingredients</h3>
+              <ul className="ai-cook__ingredients">
+                {SAMPLE.ingredients.map(item => <li key={item}>{item}</li>)}
+              </ul>
+              <h3 className="ai-cook__section">Steps</h3>
+              <ol className="ai-cook__steps">
+                {SAMPLE.steps.map(step => <li key={step}>{step}</li>)}
+              </ol>
+              <p className="ai-cook__disclaimer">A sample to show the format. Yours is written from the ingredients you list.</p>
+            </article>
           </div>
         </div>
       </div>

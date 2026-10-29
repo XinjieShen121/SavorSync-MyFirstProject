@@ -92,16 +92,6 @@ a:hover > .home-link .bi { transform: translateX(2px); }
 a:hover .home-media__image,
 a.home-media:hover .home-media__image { transform: scale(1.03); }
 
-.home-credit {
-  margin: var(--space-2) 0 0;
-  font-size: var(--text-xs);
-  line-height: 16px;
-  color: var(--color-text-muted);
-  overflow-wrap: anywhere;
-}
-
-.home-credit a { color: inherit; }
-
 /* Skeleton shapes for this page */
 .home .skeleton--line { height: 14px; margin-top: var(--space-3); }
 .home-skel--kicker { width: 40%; }
@@ -835,7 +825,7 @@ a.home-post:hover {
   .home-hero__inner { padding-inline: 0; }
   .home-hero__figure .home-media,
   .home-hero__inner > .home-hero__media { border-radius: 0; }
-  .home-hero__figure .home-credit,
+  .home-hero__figure .photo-credit,
   .home-hero__text { padding-inline: var(--space-4); }
 
   .home-hero__actions .btn--primary { flex: 1; }

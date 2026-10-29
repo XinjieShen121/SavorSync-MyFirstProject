@@ -3,7 +3,9 @@
 // Usage, from savorsync-api:
 //   npm run add-photos -- --dry-run   picks photos and writes photos-preview.html to look at; changes nothing
 //   npm run add-photos                saves the picks to the recipe database
-// A bad pick can be fixed by adding the recipe to OVERRIDES below with a better Commons file name.
+//   npm run add-photos -- --replace "Bibimbap"   re-picks one recipe even though it has a photo
+// A bad pick can be fixed by adding the recipe to OVERRIDES below with a better Commons file name,
+// then running it again with --replace and the recipe name.
 const fs = require('fs');
 const path = require('path');
 require('dotenv').config({ path: path.join(__dirname, '..', '.env') });
@@ -16,6 +18,8 @@ if (!process.env.MONGODB_URI || !process.env.RECIPE_MONGODB_URI) {
 const { userDb, recipeDb } = require('../config/mongoose');
 
 const DRY_RUN = process.argv.includes('--dry-run');
+const replaceAt = process.argv.indexOf('--replace');
+const REPLACE = replaceAt > -1 ? process.argv[replaceAt + 1] : null;
 const API = 'https://commons.wikimedia.org/w/api.php';
 // Wikimedia asks every script to identify itself
 const HEADERS = { 'User-Agent': 'SavorSync recipe photos (https://github.com/XinjieShen121/SavorSync-MyFirstProject)' };
@@ -24,6 +28,8 @@ const WIDTH = 1200;
 // recipe_name -> exact Commons file name, for when the search picks the wrong photo
 const OVERRIDES = {
   // 'Spaghetti Carbonara': 'File:Spaghetti alla carbonara.jpg',
+  // The search picked a plate with bao beside the bowl
+  Bibimbap: 'File:Dolsot-bibimbap.jpg',
 };
 
 // Only licenses that allow reuse on a website with credit (no "non-commercial" or "no derivatives")
@@ -103,11 +109,20 @@ const main = async () => {
   console.log(`✅ Connected to recipe database "${recipeDb.name}" on ${recipeDb.host}`);
   const collection = recipeDb.db.collection('recipes');
 
+  const which = REPLACE
+    ? { recipe_name: REPLACE }
+    : { $or: [{ image_url: { $in: [null, ''] } }, { image_url: { $exists: false } }] };
   const missing = await collection
-    .find({ $or: [{ image_url: { $in: [null, ''] } }, { image_url: { $exists: false } }], generated: { $ne: true } })
+    .find({ ...which, generated: { $ne: true } })
     .project({ recipe_name: 1 })
     .toArray();
-  console.log(`🔎 ${missing.length} recipes have no photo. Searching Wikimedia Commons...\n`);
+  if (REPLACE && !missing.length) {
+    console.error(`❌ No recipe is named "${REPLACE}"`);
+    process.exit(1);
+  }
+  console.log(REPLACE
+    ? `🔎 Replacing the photo of ${REPLACE}. Searching Wikimedia Commons...\n`
+    : `🔎 ${missing.length} recipes have no photo. Searching Wikimedia Commons...\n`);
 
   const picks = [];
   for (const recipe of missing) {
