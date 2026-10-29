@@ -1,6 +1,6 @@
 # SavorSync Design System
 
-Version 1.1 · October 2026
+Version 1.2 · October 2026
 
 This is the single source of truth for how SavorSync looks and behaves. Every page, component and CSS file uses the tokens and patterns below. If something you need is not here, add it to this file first, then build it.
 
@@ -425,9 +425,9 @@ Anatomy (top to bottom): photo 4:3 with cuisine badge top-left and heart icon bu
 
 A compact teaser of the dish's story, shown above the ingredients on the recipe page.
 
-- Container: `surface-warm` background, `--radius-md`, padding `--space-5`, left 4px bar in `brand-500`.
-- Overline: `bi-globe2` icon + "The story" in `--text-xs` uppercase, `brand-800`.
-- Body: the story clamped to **2 lines** (`-webkit-line-clamp: 2`), `--text-body-lg`, `text`.
+- Container: no card. A 1px `--color-border` top rule with `--space-6` above the label (4.11 section rule).
+- Label: "The story" as a 4.11 kicker (`--text-xs` 600 uppercase, +0.08em, `brand-800`).
+- Body: an excerpt in `--font-display` 400, `--text-h4` on 32px leading, `text`, clamped to **3 lines**.
 - Actions row: Ghost button "Read the story" (expands in place to full text, max `--container-reading`, `aria-expanded`), and, if a video exists, Ghost button `bi-play-circle` "Watch (2 min)" that opens the video in a dialog.
 - AI insight: inside the expanded story, Secondary button `bi-stars` "Ask about this dish" opens preset questions as chips ("What's the story behind it?", "Why this ingredient?", "How is it served at home?"). The AI answer appears below with an "AI-generated" `--text-xs` label in `text-muted`.
 - If no story exists, the card is not shown (no placeholder text).
@@ -560,10 +560,10 @@ Used on the home page and any page that reads like a magazine feature. Component
 
 Top to bottom on mobile; two columns from 900px.
 
-1. **Hero:** 16:9 photo (`--radius-md` on desktop, full-bleed on mobile) with cuisine badge.
-2. **Header:** title (`--text-h1`), one-line subtitle (`text-secondary`), facts row (time, servings, difficulty from data only, with icons, `--text-sm`), actions row: heart, share, print as Icon buttons.
+1. **Hero (4.11):** from 900px, a split hero with the media at 7fr beside the header at 5fr; on phones the media comes first, full-bleed. The media is a 4:3 photo (`--radius-md` from 600px) with its photo credit, or the type cover (hero size) when there's no photo.
+2. **Header:** kicker (cuisine · region), title (`--font-display` 700, clamp 36 to 56px), the subtitle as a Deck (2.2), then a facts row under a hairline rule: total time first ("25 min total", 600, `text`), then "Prep 10 min · Cook 15 min", servings, difficulty and rating, from data only. Actions row below: heart, share, print as Icon buttons.
 3. **Cultural story card** (4.4).
-4. **Two columns from 900px:** left (40%) Ingredients with the diet selector and swap pattern (4.5), sticky under the nav; right (60%) Steps as a numbered list (`--text-body-lg`, step numbers in a 32px `brand-50` circle with `brand-800` number), with fun facts as 4.6-style tip boxes inline.
+4. **Two columns from 900px:** left (40%) Ingredients with the diet selector and swap pattern (4.5), sticky under the nav; right (60%) Steps as a numbered list (`--text-body-lg`, step numbers in a 32px `brand-50` circle with `brand-800` number), with no boxes between steps. The recipe's fun facts sit together after the steps in a "Good to know" aside: a hairline rule, a 4.11 kicker, and a list with small `brand-700` dots. (Cook mode still shows them as step tips.)
 5. **More sections** as anchors, not tabs: "Cook with music" (Spotify embed), "Video" (if present), "From the community" (posts linked to this recipe).
 6. **Docked Start Cooking button:** a bar fixed to the bottom of the viewport (`--z-dock`), `surface` at 96% opacity with backdrop blur, `--shadow-2`, padding `--space-3 var(--space-4)` plus safe-area inset. Contains a full-width Primary large button `bi-play-fill` "Start cooking" that opens cook mode (4.6); on desktop the bar is centered with max width 480px and `--radius-pill`. It hides while the footer is visible and while cook mode is open. Page content gets bottom padding equal to the bar height so nothing is covered.
 
@@ -584,7 +584,7 @@ Sections without data are hidden; loading and errors follow 4.7.
 
 ### 5.3 List pages (All recipes, Cuisine, Trending)
 
-Page title (`--text-h1`) and a one-line description, filter bar (4.2) and search, result count (`--text-sm`, `text-secondary`, `aria-live="polite"`), the card grid (4.3), then "Load more" as a Secondary button (or infinite scroll with a visible fallback button). States per 4.7.
+Page title (`--text-h1`) and a one-line description, search, then the filter bar (4.2). On All recipes the bar shows only the cuisine row; diet, difficulty and time sit behind a Secondary small "Filters (n)" button (n = how many of those are on), which opens a popover on desktop and a bottom sheet under 600px, with "Clear" and "Show N recipes" at the bottom. Filters that are on show next to the button as pressed chips that remove themselves when tapped. Then the result count (`--text-sm`, `text-secondary`, `aria-live="polite"`), the card grid (4.3), then "Load more" as a Secondary button (or infinite scroll with a visible fallback button). States per 4.7.
 
 ### 5.4 Community, post and profile
 
@@ -651,3 +651,4 @@ Use this when replacing hardcoded values (stage 2).
 | --- | --- | --- |
 | 1.0 | 2026-10-20 | First version, based on the existing SavorSync brand (`#FF6B35`, `#FBE7D2`, Playfair Display, Poppins) with accessible action colors, one body font, and the component patterns above. |
 | 1.1 | 2026-10-29 | Editorial additions from the home page redesign (PR #8): Deck type style and Playfair italic (2.2), type cover and photo credit replacing the grey photo fallback (2.8, 4.11), section rules (4.11), and the new home page structure (5.2). |
+| 1.2 | 2026-10-29 | Recipe page in the 4.11 style: split hero with type cover, kicker and deck, total time first, story as a ruled excerpt (4.4, 5.1), fun facts in one "Good to know" aside. All recipes: cuisine row visible, other filters behind a "Filters (n)" button (5.3). |
