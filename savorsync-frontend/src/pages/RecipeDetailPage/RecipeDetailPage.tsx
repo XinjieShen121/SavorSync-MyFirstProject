@@ -6,7 +6,7 @@ import CulturalMusic from '../../components/CulturalMusic';
 import AskAboutDish from '../../components/AskAboutDish';
 import CulturalVideo from '../../components/CulturalVideo';
 import { getYouTubeId } from '../../utils/youtube';
-import { ErrorState, InlineError, InlineSpinner, LoadingState, RecipeDetailSkeleton } from '../../components/ui/States';
+import { ErrorState, LoadingState, RecipeDetailSkeleton } from '../../components/ui/States';
 import { getSubstitutions, IngredientSwaps } from '../../services/apiSubstitutions';
 import CookMode from '../../components/CookMode';
 import FavoriteButton from '../../components/FavoriteButton';
@@ -90,6 +90,9 @@ const RecipeDetailPage: React.FC = () => {
   const [videoOpen, setVideoOpen] = useState(false);
 
   const [checked, setChecked] = useState<Record<number, boolean>>({});
+  const [doneSteps, setDoneSteps] = useState<Record<number, boolean>>({});
+  // Phones show one list at a time; desktop shows both side by side
+  const [mobileList, setMobileList] = useState<'ingredients' | 'steps'>('ingredients');
   const [swaps, setSwaps] = useState<Record<number, SwapOption>>({});
   const [activeDiet, setActiveDiet] = useState<Diet | null>(null);
   const [swapTarget, setSwapTarget] = useState<{ index: number; anchor: HTMLElement } | null>(null);
@@ -97,8 +100,6 @@ const RecipeDetailPage: React.FC = () => {
   const [cookStep, setCookStep] = useState<number | null>(null);
   const [savedStep, setSavedStep] = useState<number | null>(null);
   const [suggested, setSuggested] = useState<IngredientSwaps[]>([]);
-  const [swapsState, setSwapsState] = useState<'loading' | 'error' | 'ready'>('loading');
-  const [swapsReloadKey, setSwapsReloadKey] = useState(0);
   const [servings, setServings] = useState<number | null>(null);
   const [batch, setBatch] = useState(1);
   const [units, setUnits] = useState<UnitSystem | null>(null);
@@ -137,22 +138,20 @@ const RecipeDetailPage: React.FC = () => {
   const instructions: string[] = recipe?.instructions || [];
   const funFacts: string[] = recipe?.fun_facts || [];
 
-  // Suggested swaps from the API (AI, or a checked table when AI is off)
+  // Suggested swaps from the API (AI, or a checked table when AI is off).
+  // If they fail to load, the recipe's own substitutions are still offered.
   useEffect(() => {
     if (!recipe?._id) return;
     let cancelled = false;
-    setSwapsState('loading');
     getSubstitutions(recipe._id)
       .then((result) => {
-        if (cancelled) return;
-        setSuggested(result.swaps);
-        setSwapsState('ready');
+        if (!cancelled) setSuggested(result.swaps);
       })
       .catch(() => {
-        if (!cancelled) setSwapsState('error');
+        if (!cancelled) setSuggested([]);
       });
     return () => { cancelled = true; };
-  }, [recipe?._id, swapsReloadKey]);
+  }, [recipe?._id]);
 
   // Swap options per ingredient: the recipe's own substitutions first, then suggested swaps
   const swapOptions = useMemo(() => {
@@ -213,6 +212,28 @@ const RecipeDetailPage: React.FC = () => {
       await navigator.clipboard?.writeText(url);
     }
   };
+
+  // Ticked ingredients and steps survive a reload, per recipe (this browser only)
+  const progressKey = recipeId ? `savorsync:progress:${recipeId}` : '';
+  useEffect(() => {
+    if (!progressKey) return;
+    try {
+      const saved = JSON.parse(localStorage.getItem(progressKey) || '{}');
+      setChecked(saved.ingredients || {});
+      setDoneSteps(saved.steps || {});
+    } catch {
+      setChecked({});
+      setDoneSteps({});
+    }
+  }, [progressKey]);
+  useEffect(() => {
+    if (!progressKey) return;
+    try {
+      localStorage.setItem(progressKey, JSON.stringify({ ingredients: checked, steps: doneSteps }));
+    } catch {
+      // Storage can be full or blocked; progress then lasts only for this visit
+    }
+  }, [progressKey, checked, doneSteps]);
 
   // Offer "Resume at step N" when cook mode was left mid-recipe
   useEffect(() => {
@@ -299,6 +320,21 @@ const RecipeDetailPage: React.FC = () => {
   // Fun facts are context, not cooking instructions, so they sit together beside the steps
   const goodToKnow = storyIsFirstFact ? funFacts.slice(1) : funFacts;
   const swapCount = Object.keys(swaps).length;
+  const stepsDone = instructions.filter((_, index) => doneSteps[index]).length;
+  const ingredientsReady = ingredients.filter((_, index) => checked[index]).length;
+  const nextStep = instructions.findIndex((_, index) => !doneSteps[index]);
+  const hasProgress = stepsDone > 0 || ingredientsReady > 0;
+  const resetProgress = () => {
+    setChecked({});
+    setDoneSteps({});
+  };
+  // One label and target for every "start cooking" button on the page
+  const cookFrom = savedStep !== null && savedStep < instructions.length
+    ? savedStep
+    : stepsDone > 0 && nextStep >= 0 ? nextStep : 0;
+  const cookLabel = savedStep !== null && savedStep < instructions.length
+    ? `Resume at step ${savedStep + 1}`
+    : stepsDone > 0 && nextStep > 0 ? `Continue at step ${nextStep + 1}` : 'Start cooking';
   // Serving scaler and units: scale by servings when the recipe has them,
   // otherwise by batch size; convert units only when the cook asks for it
   const baseServings = Number(recipe.servings) > 0 ? Number(recipe.servings) : null;
@@ -400,6 +436,12 @@ const RecipeDetailPage: React.FC = () => {
               )}
             </ul>
             <div className="recipe-actions">
+              {instructions.length > 0 && (
+                <button type="button" className="btn btn--primary recipe-actions__cook" onClick={() => setCookStep(cookFrom)}>
+                  <i className="bi bi-play-fill" aria-hidden="true"></i>
+                  {cookLabel}
+                </button>
+              )}
               <FavoriteButton recipeId={recipe._id} recipeName={title || 'this recipe'} />
               <button type="button" className="btn btn--icon" aria-label="Share recipe" onClick={shareRecipe}>
                 <i className="bi bi-share" aria-hidden="true"></i>
@@ -414,7 +456,8 @@ const RecipeDetailPage: React.FC = () => {
         {/* 3. The story: a label and a short excerpt under a hairline rule (4.11) */}
         {story && (
           <section className="recipe-story" aria-labelledby="story-title">
-            <h2 className="recipe-kicker" id="story-title">The story</h2>
+            <h2 className="recipe-kicker recipe-story__label" id="story-title">The story</h2>
+            <div className="recipe-story__text">
             <p className={`recipe-story__body ${storyOpen ? 'is-open' : ''}`} id="story-body">
               {story}
             </p>
@@ -426,7 +469,7 @@ const RecipeDetailPage: React.FC = () => {
                 aria-controls="story-body"
                 onClick={() => setStoryOpen((open) => !open)}
               >
-                {storyOpen ? 'Show less' : 'Read the story'}
+                {storyOpen ? 'Show less' : 'Read the story and ask about it'}
               </button>
               {hasShortVideo && (
                 <button type="button" className="btn btn--ghost btn--sm" onClick={() => setVideoOpen(true)}>
@@ -440,13 +483,33 @@ const RecipeDetailPage: React.FC = () => {
                 <AskAboutDish recipe={recipe} />
               </div>
             )}
+            </div>
           </section>
         )}
 
-        {/* 4. Ingredients and steps */}
+        {/* 4. Ingredients and steps. On phones a switch shows one list at a time */}
+        <div className="recipe-switch" role="group" aria-label="Show">
+          <div className="recipe-switch__buttons">
+            <button type="button" aria-pressed={mobileList === 'ingredients'} onClick={() => setMobileList('ingredients')}>
+              Ingredients{ingredients.length > 0 && ` · ${ingredientsReady}/${ingredients.length}`}
+            </button>
+            <button type="button" aria-pressed={mobileList === 'steps'} onClick={() => setMobileList('steps')}>
+              Steps{instructions.length > 0 && ` · ${stepsDone}/${instructions.length}`}
+            </button>
+          </div>
+          <div className="recipe-switch__progress" aria-hidden="true">
+            <span style={{ width: `${instructions.length ? (stepsDone / instructions.length) * 100 : 0}%` }}></span>
+          </div>
+        </div>
+
         <div className="recipe-columns">
-          <section className="ingredients" aria-labelledby="ingredients-title">
-            <h2 id="ingredients-title" className="recipe-section-title">Ingredients</h2>
+          <section className={`ingredients ${mobileList === 'ingredients' ? '' : 'is-mobile-hidden'}`} aria-labelledby="ingredients-title">
+            <div className="recipe-list-head">
+              <h2 id="ingredients-title" className="recipe-section-title">Ingredients</h2>
+              {ingredients.length > 0 && (
+                <span className="recipe-list-head__count">{ingredientsReady} of {ingredients.length} ready</span>
+              )}
+            </div>
 
             <div className="ingredient-tools">
               {baseServings ? (
@@ -482,9 +545,9 @@ const RecipeDetailPage: React.FC = () => {
                   ))}
                 </div>
               )}
-              <div className="ingredient-tools__chips" role="group" aria-label="Units">
-                <button type="button" className="chip" aria-pressed={shownUnits === 'us'} onClick={() => setUnits('us')}>US</button>
-                <button type="button" className="chip" aria-pressed={shownUnits === 'metric'} onClick={() => setUnits('metric')}>Metric</button>
+              <div className="units-toggle" role="group" aria-label="Units">
+                <button type="button" aria-pressed={shownUnits === 'metric'} onClick={() => setUnits('metric')}>Metric</button>
+                <button type="button" aria-pressed={shownUnits === 'us'} onClick={() => setUnits('us')}>US</button>
               </div>
               {isAdjusted && (
                 <button
@@ -497,20 +560,10 @@ const RecipeDetailPage: React.FC = () => {
               )}
             </div>
 
-            {swapsState === 'loading' && (
-              <div className="diet-selector diet-selector--status">
-                <InlineSpinner label="Finding ingredient swaps" />
-                <span aria-hidden="true">Finding vegetarian, gluten-free and low-sodium swaps</span>
-              </div>
-            )}
-            {swapsState === 'error' && (
-              <div className="diet-selector diet-selector--status">
-                <InlineError message="Couldn't load ingredient swaps." onRetry={() => setSwapsReloadKey((k) => k + 1)} />
-              </div>
-            )}
             {availableDiets.length > 0 && (
               <div className="diet-selector">
-                <div className="diet-selector__chips" role="group" aria-label="Diet">
+                <p className="recipe-kicker recipe-kicker--muted" id="make-it-label">Make it</p>
+                <div className="diet-selector__chips" role="group" aria-labelledby="make-it-label">
                   <button type="button" className="chip" aria-pressed={activeDiet === null} onClick={() => applyDiet(null)}>
                     {activeDiet === null && <i className="bi bi-check" aria-hidden="true"></i>}Original
                   </button>
@@ -523,8 +576,8 @@ const RecipeDetailPage: React.FC = () => {
                 </div>
                 {swapCount > 0 && (
                   <p className="diet-selector__count" aria-live="polite">
-                    {swapCount} {swapCount === 1 ? 'swap' : 'swaps'} applied
-                    <button type="button" className="btn btn--ghost btn--sm" onClick={() => applyDiet(null)}>Undo</button>
+                    {swapCount} {swapCount === 1 ? 'ingredient' : 'ingredients'} swapped. The steps are updated too.
+                    <button type="button" className="btn btn--ghost btn--sm" onClick={() => applyDiet(null)}>Undo all</button>
                   </p>
                 )}
               </div>
@@ -548,25 +601,25 @@ const RecipeDetailPage: React.FC = () => {
                       <span className="ingredient-row__qty">{displayQuantity(original.quantity)}</span>
                       <span className={`ingredient-row__name ${isChecked ? 'is-checked' : ''}`}>
                         {swap ? swap.name : original.name}
-                        {swap && <span className="ingredient-row__instead"> instead of {original.name}</span>}
                       </span>
                     </label>
-                    {swap && <span className="badge badge--swapped">Swapped</span>}
-                    {swap ? (
-                      <button type="button" className="btn btn--ghost btn--sm" onClick={() => revertSwap(index)}>
-                        <i className="bi bi-arrow-counterclockwise" aria-hidden="true"></i>Revert
+                    {!swap && options.length > 0 && (
+                      <button
+                        type="button"
+                        className="swap-button"
+                        aria-label={`Swap ${original.name}`}
+                        onClick={(e) => setSwapTarget({ index, anchor: e.currentTarget })}
+                      >
+                        <i className="bi bi-arrow-left-right" aria-hidden="true"></i>Swap
                       </button>
-                    ) : (
-                      options.length > 0 && (
-                        <button
-                          type="button"
-                          className="btn btn--icon btn--sm swap-button"
-                          aria-label={`Swap ${original.name}`}
-                          onClick={(e) => setSwapTarget({ index, anchor: e.currentTarget })}
-                        >
-                          <i className="bi bi-arrow-left-right" aria-hidden="true"></i>
+                    )}
+                    {swap && (
+                      <p className="ingredient-row__instead">
+                        {swap.diet ? `${DIET_LABELS[swap.diet]} swap, instead` : 'Instead'} of {original.name}
+                        <button type="button" className="ingredient-row__undo" onClick={() => revertSwap(index)}>
+                          Undo<span className="visually-hidden"> swap for {original.name}</span>
                         </button>
-                      )
+                      </p>
                     )}
                   </li>
                 );
@@ -581,23 +634,51 @@ const RecipeDetailPage: React.FC = () => {
             )}
           </section>
 
-          <section className="steps" aria-labelledby="steps-title">
-            <h2 id="steps-title" className="recipe-section-title">Steps</h2>
+          <section className={`steps ${mobileList === 'steps' ? '' : 'is-mobile-hidden'}`} aria-labelledby="steps-title">
+            <div className="recipe-list-head">
+              <h2 id="steps-title" className="recipe-section-title">Steps</h2>
+              {hasProgress && (
+                <button type="button" className="btn btn--ghost btn--sm" onClick={resetProgress}>Reset</button>
+              )}
+            </div>
+            {instructions.length > 0 && (
+              <div className="step-progress">
+                <div
+                  className="step-progress__bar"
+                  role="progressbar"
+                  aria-label="Steps done"
+                  aria-valuemin={0}
+                  aria-valuemax={instructions.length}
+                  aria-valuenow={stepsDone}
+                >
+                  <span style={{ width: `${(stepsDone / instructions.length) * 100}%` }}></span>
+                </div>
+                <span className="step-progress__text">
+                  {stepsDone === instructions.length ? 'All steps done' : `${stepsDone} of ${instructions.length} steps done`}
+                </span>
+              </div>
+            )}
             <ol className="step-list">
               {instructions.map((step, index) => {
+                const done = !!doneSteps[index];
+                const current = stepsDone > 0 && index === nextStep;
                 return (
-                  <li key={index} className="step">
-                    <button
-                      type="button"
-                      className="step__number"
-                      aria-label={`Cook from step ${index + 1}`}
-                      onClick={() => setCookStep(index)}
-                    >
-                      {index + 1}
-                    </button>
-                    <div className="step__body">
-                      <p>{renderStepText(step)}</p>
-                    </div>
+                  <li key={index} className={`step ${done ? 'is-done' : ''} ${current ? 'is-current' : ''}`}>
+                    <label className="step__label">
+                      <input
+                        type="checkbox"
+                        className="step__check"
+                        checked={done}
+                        onChange={() => setDoneSteps((prev) => ({ ...prev, [index]: !prev[index] }))}
+                      />
+                      <span className="step__mark" aria-hidden="true">
+                        {done && <i className="bi bi-check-lg"></i>}
+                      </span>
+                      <span className="step__body">
+                        <span className="step__kicker">Step {index + 1}{current && ' · now'}</span>
+                        <span className="step__text">{renderStepText(step)}</span>
+                      </span>
+                    </label>
                   </li>
                 );
               })}
@@ -637,9 +718,9 @@ const RecipeDetailPage: React.FC = () => {
       {/* 6. Docked Start Cooking button */}
       {instructions.length > 0 && cookStep === null && (
         <div className="cook-dock">
-          <button type="button" className="btn btn--primary btn--lg cook-dock__button" onClick={() => setCookStep(savedStep ?? 0)}>
+          <button type="button" className="btn btn--primary btn--lg cook-dock__button" onClick={() => setCookStep(cookFrom)}>
             <i className="bi bi-play-fill" aria-hidden="true"></i>
-            {savedStep !== null && savedStep < instructions.length ? `Resume at step ${savedStep + 1}` : 'Start cooking'}
+            {cookLabel}
           </button>
         </div>
       )}

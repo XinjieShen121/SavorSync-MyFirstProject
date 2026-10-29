@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { Link, NavLink } from 'react-router-dom';
 import { useUser } from '../context/UserContext';
 import { useShoppingList } from '../context/ShoppingListContext';
@@ -15,9 +15,22 @@ const links = [
 const SiteNav: React.FC = () => {
   const { user, isAuthenticated } = useUser();
   const { remaining } = useShoppingList();
+  const navRef = useRef<HTMLElement>(null);
+
+  // Publish the nav's height (it wraps to two rows on phones) so sticky
+  // page elements can sit just below it: top: var(--site-nav-height)
+  useEffect(() => {
+    const nav = navRef.current;
+    if (!nav || typeof ResizeObserver === 'undefined') return;
+    const update = () => document.documentElement.style.setProperty('--site-nav-height', `${nav.offsetHeight}px`);
+    update();
+    const observer = new ResizeObserver(update);
+    observer.observe(nav);
+    return () => observer.disconnect();
+  }, []);
 
   return (
-    <nav className="site-nav">
+    <nav className="site-nav" ref={navRef}>
       <div className="site-nav__inner">
         <Link to="/" className="site-nav__logo">
           <i className="bi bi-egg-fried"></i>
