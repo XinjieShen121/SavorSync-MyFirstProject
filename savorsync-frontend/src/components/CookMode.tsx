@@ -1,7 +1,9 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Drawer } from '@mui/material';
-import { savedStepKey } from '../utils/cookMode';
+import { ingredientTerms, ingredientsInStep, savedStepKey } from '../utils/cookMode';
+import { photoForIngredient } from '../data/ingredientPhotos';
+import type { ImageCredit } from './PhotoCredit';
 import './CookMode.css';
 
 export interface CookIngredient {
@@ -23,6 +25,9 @@ interface CookModeProps {
   onToggleIngredient: (index: number) => void;
   startStep: number;
   onClose: () => void;
+  // The finished dish, shown the whole time (design.md 4.6)
+  heroImage?: string;
+  heroCredit?: ImageCredit;
 }
 
 interface Timer {
@@ -78,6 +83,8 @@ const CookMode: React.FC<CookModeProps> = ({
   onToggleIngredient,
   startStep,
   onClose,
+  heroImage,
+  heroCredit,
 }) => {
   const [step, setStep] = useState(Math.min(startStep, steps.length - 1));
   const [finished, setFinished] = useState(false);
@@ -173,23 +180,24 @@ const CookMode: React.FC<CookModeProps> = ({
       return nextTimers;
     });
 
-  // Bold the ingredients named in the step, with their quantity; swapped ones in herb green
+  // Bold the ingredients named in the step. A swapped one shows its new name (with quantity) in herb green,
+  // so the steps follow the swap; the others keep the step's own words.
   const renderStep = (text: string) => {
     const keys = ingredients
-      .flatMap((ing, index) => [ing.swappedFrom, ing.swapKey, ing.name].filter(Boolean).map((key) => ({ key: key as string, index })))
+      .flatMap((ing, index) => (ing.swappedFrom
+        ? [ing.swappedFrom, ing.swapKey, ing.name].filter(Boolean)
+        : [ing.name, ...ingredientTerms(ing.name)]
+      ).map((key) => ({ key: key as string, index })))
       .sort((a, b) => b.key.length - a.key.length);
     if (!keys.length) return text;
-    const pattern = new RegExp(`\\b(${keys.map((k) => escapeRegExp(k.key)).join('|')})\\b`, 'gi');
+    const pattern = new RegExp(`\\b(${keys.map((k) => `${escapeRegExp(k.key)}(?:e?s)?`).join('|')})\\b`, 'gi');
     return text.split(pattern).map((part, i) => {
-      const hit = keys.find((k) => k.key.toLowerCase() === part.toLowerCase());
+      const hit = keys.find((k) => new RegExp(`^${escapeRegExp(k.key)}(?:e?s)?$`, 'i').test(part));
       if (!hit) return part;
       const ing = ingredients[hit.index];
+      if (!ing.swappedFrom) return <strong key={i}>{part}</strong>;
       const label = `${ing.quantity ? `${ing.quantity} ` : ''}${ing.name}`;
-      return ing.swappedFrom ? (
-        <strong key={i} className="cook-step__swap" title={`Original: ${ing.swappedFrom}`}>{label}</strong>
-      ) : (
-        <strong key={i}>{label}</strong>
-      );
+      return <strong key={i} className="cook-step__swap" title={`Original: ${ing.swappedFrom}`}>{label}</strong>;
     });
   };
 
@@ -197,6 +205,16 @@ const CookMode: React.FC<CookModeProps> = ({
   const timer = timers[step];
   const otherTimers = Object.entries(timers).filter(([key, t]) => Number(key) !== step && (t.running || t.remaining === 0));
   const tip = tips[step];
+  const uses = ingredientsInStep(steps[step] || '', ingredients.map((ing) => ing.swappedFrom ? `${ing.name}, ${ing.swappedFrom}` : ing.name));
+  const readyCount = ingredients.filter((_, index) => checked[index]).length;
+  const progress = finished ? 100 : Math.round((step / steps.length) * 100);
+
+  // Credits for every photo on screen right now: the dish, then this step's ingredients
+  const credits = [
+    ...(heroImage && heroCredit?.source_url ? [{ author: heroCredit.author || 'Unknown author', license: heroCredit.license || '', source: heroCredit.source_url }] : []),
+    ...uses.map((index) => photoForIngredient(ingredients[index].name)).filter(Boolean)
+      .map((photo) => ({ author: photo!.author, license: photo!.license, source: photo!.source })),
+  ].filter((credit, i, all) => all.findIndex((c) => c.author === credit.author && c.license === credit.license) === i);
 
   const onTouchStart = (e: React.TouchEvent) => { touchStart.current = e.touches[0].clientX; };
   const onTouchEnd = (e: React.TouchEvent) => {
@@ -207,11 +225,36 @@ const CookMode: React.FC<CookModeProps> = ({
     else if (dx > 50) back();
   };
 
+  const thumb = (name: string, className: string) => {
+    const photo = photoForIngredient(name);
+    return photo
+      ? <img src={photo.src} alt="" className={className} loading="lazy" />
+      : <span className={`${className} cook-thumb--none`} aria-hidden="true">{name.charAt(0)}</span>;
+  };
+
+  const ingredientList = (variant: 'side' | 'sheet') => (
+    <ul className={`cook-ingredients__list cook-ingredients__list--${variant}`}>
+      {ingredients.map((ing, index) => (
+        <li key={index} className={`${ing.swappedFrom ? 'is-swapped' : ''} ${uses.includes(index) ? 'is-now' : ''}`}>
+          <label>
+            {thumb(ing.name, 'cook-thumb')}
+            <span className={`cook-ingredients__name ${checked[index] ? 'is-checked' : ''}`}>
+              {ing.quantity && <strong>{ing.quantity} </strong>}
+              {ing.name}
+              {ing.swappedFrom && <span className="cook-ingredients__instead"> instead of {ing.swappedFrom}</span>}
+            </span>
+            <input type="checkbox" className="ingredient-check" checked={!!checked[index]} onChange={() => onToggleIngredient(index)} />
+          </label>
+        </li>
+      ))}
+    </ul>
+  );
+
   return (
     <div className="cook-mode" role="dialog" aria-modal="true" aria-label={`Cook mode: ${title}`}>
       <div className="cook-mode__top">
-        <button ref={exitRef} type="button" className="btn btn--icon" aria-label="Exit cook mode" onClick={leave}>
-          <i className="bi bi-x-lg" aria-hidden="true"></i>
+        <button ref={exitRef} type="button" className="btn btn--ghost cook-mode__exit" onClick={leave}>
+          <i className="bi bi-x-lg" aria-hidden="true"></i>Exit
         </button>
         <div className="cook-mode__title">
           <span>{title}</span>
@@ -220,20 +263,25 @@ const CookMode: React.FC<CookModeProps> = ({
               {otherTimers.map(([key, t]) => (
                 <button key={key} type="button" className={`cook-mini-timer ${t.remaining === 0 ? 'is-done' : ''}`} onClick={() => { setFinished(false); setStep(Number(key)); }}>
                   <i className="bi bi-stopwatch" aria-hidden="true"></i>
-                  {t.remaining === 0 ? 'Done' : formatTime(t.remaining)}
+                  Step {Number(key) + 1} · {t.remaining === 0 ? 'Done' : formatTime(t.remaining)}
                 </button>
               ))}
             </span>
           )}
         </div>
-        <button type="button" className="btn btn--icon" aria-label="Ingredients" onClick={() => setIngredientsOpen(true)}>
-          <i className="bi bi-list-check" aria-hidden="true"></i>
+        <button type="button" className="btn btn--secondary btn--sm cook-mode__ingredients-btn" onClick={() => setIngredientsOpen(true)}>
+          Ingredients
         </button>
+      </div>
+      <div className="cook-line" role="progressbar" aria-label="Cooking progress" aria-valuemin={0} aria-valuemax={100} aria-valuenow={progress}>
+        <span style={{ width: `${progress}%` }} />
       </div>
 
       {finished ? (
         <div className="cook-finish">
-          <i className="bi bi-check-circle-fill cook-finish__icon" aria-hidden="true"></i>
+          {heroImage
+            ? <img src={heroImage} alt="" className="cook-finish__photo" />
+            : <i className="bi bi-check-circle-fill cook-finish__icon" aria-hidden="true"></i>}
           <h2 className="cook-finish__title">Enjoy your {title}!</h2>
           <div className="cook-finish__actions">
             <Link to={`/create-post?recipe=${recipeId}`} className="btn btn--primary btn--lg">
@@ -245,69 +293,115 @@ const CookMode: React.FC<CookModeProps> = ({
           </div>
         </div>
       ) : (
-        <>
-          <div className="cook-mode__progress">
-            <div className="cook-progress" aria-hidden="true">
-              {steps.map((_, i) => (
-                <span key={i} className={`cook-progress__seg ${i < step ? 'is-done' : i === step ? 'is-current' : ''}`} />
-              ))}
-            </div>
-            <p className="cook-mode__count" aria-live="polite">Step {step + 1} of {steps.length}</p>
-          </div>
+        <div className={`cook-mode__layout ${heroImage ? 'has-photo' : ''}`}>
+          <aside className="cook-side" aria-label="Ingredients">
+            {heroImage && (
+              <figure className="cook-side__dish">
+                <img src={heroImage} alt="" />
+                <figcaption>What you're making</figcaption>
+              </figure>
+            )}
+            <p className="cook-kicker cook-kicker--muted">All ingredients · {readyCount} of {ingredients.length} ready</p>
+            {ingredientList('side')}
+          </aside>
 
-          <div className="cook-mode__body" onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
-            <div key={step} className="cook-step">
-              <h2 className="visually-hidden">Step {step + 1} of {steps.length}</h2>
-              <p className="cook-step__text" onClick={next}>{renderStep(steps[step])}</p>
-
-              {duration && (
-                <div className="cook-timer">
-                  {!timer ? (
-                    <button type="button" className="btn btn--secondary" onClick={() => startTimer(step, duration)}>
-                      <i className="bi bi-stopwatch" aria-hidden="true"></i>Start {formatTime(duration)} timer
-                    </button>
-                  ) : timer.remaining === 0 ? (
-                    <span className="cook-timer__chip is-done" role="status">
-                      <i className="bi bi-check-lg" aria-hidden="true"></i>Done
-                      <button type="button" className="btn btn--icon btn--sm" aria-label="Reset timer" onClick={() => resetTimer(step)}>
-                        <i className="bi bi-arrow-counterclockwise" aria-hidden="true"></i>
-                      </button>
-                    </span>
-                  ) : (
-                    <span className="cook-timer__chip" role="timer" aria-live="off">
-                      <i className="bi bi-stopwatch" aria-hidden="true"></i>
-                      <span className="cook-timer__time">{formatTime(timer.remaining)}</span>
-                      <button type="button" className="btn btn--icon btn--sm" aria-label={timer.running ? 'Pause timer' : 'Resume timer'} onClick={() => toggleTimer(step)}>
-                        <i className={`bi ${timer.running ? 'bi-pause-fill' : 'bi-play-fill'}`} aria-hidden="true"></i>
-                      </button>
-                      <button type="button" className="btn btn--icon btn--sm" aria-label="Reset timer" onClick={() => resetTimer(step)}>
-                        <i className="bi bi-arrow-counterclockwise" aria-hidden="true"></i>
-                      </button>
-                    </span>
-                  )}
+          <div className="cook-main" onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
+            {heroImage && (
+              <div className="cook-banner" aria-hidden="true">
+                <img src={heroImage} alt="" />
+                <span className="cook-banner__step"><span>{step + 1}</span>Step {step + 1} of {steps.length}</span>
+              </div>
+            )}
+            <div className="cook-mode__body">
+              <div key={step} className="cook-step">
+                <div className="cook-step__head">
+                  <span className="cook-step__number" aria-hidden="true">{step + 1}</span>
+                  <h2 className="cook-kicker" aria-live="polite">Step {step + 1} of {steps.length}</h2>
                 </div>
-              )}
+                <p className="cook-step__text" onClick={next}>{renderStep(steps[step])}</p>
 
-              {tip && (
-                <div className="tip-box cook-step__tip">
-                  <i className="bi bi-lightbulb" aria-hidden="true"></i>
-                  <p>{tip}</p>
-                </div>
-              )}
+                {uses.length > 0 && (
+                  <section className="cook-uses" aria-label="For this step">
+                    <p className="cook-kicker">For this step</p>
+                    <ul className="cook-uses__list">
+                      {uses.map((index) => (
+                        <li key={index} className={ingredients[index].swappedFrom ? 'is-swapped' : ''}>
+                          {thumb(ingredients[index].name, 'cook-uses__photo')}
+                          <span className="cook-uses__name">
+                            {ingredients[index].quantity && <strong>{ingredients[index].quantity} </strong>}
+                            {ingredients[index].name}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  </section>
+                )}
+
+                {duration && (
+                  <div className="cook-timer">
+                    {!timer ? (
+                      <button type="button" className="btn btn--secondary" onClick={() => startTimer(step, duration)}>
+                        <i className="bi bi-stopwatch" aria-hidden="true"></i>Start {formatTime(duration)} timer
+                      </button>
+                    ) : timer.remaining === 0 ? (
+                      <span className="cook-timer__chip is-done" role="status">
+                        <i className="bi bi-check-lg" aria-hidden="true"></i>Done
+                        <button type="button" className="btn btn--icon btn--sm" aria-label="Reset timer" onClick={() => resetTimer(step)}>
+                          <i className="bi bi-arrow-counterclockwise" aria-hidden="true"></i>
+                        </button>
+                      </span>
+                    ) : (
+                      <span className="cook-timer__chip" role="timer" aria-live="off">
+                        <i className="bi bi-stopwatch" aria-hidden="true"></i>
+                        <span className="cook-timer__time">{formatTime(timer.remaining)}</span>
+                        <button type="button" className="btn btn--icon btn--sm" aria-label={timer.running ? 'Pause timer' : 'Resume timer'} onClick={() => toggleTimer(step)}>
+                          <i className={`bi ${timer.running ? 'bi-pause-fill' : 'bi-play-fill'}`} aria-hidden="true"></i>
+                        </button>
+                        <button type="button" className="btn btn--icon btn--sm" aria-label="Reset timer" onClick={() => resetTimer(step)}>
+                          <i className="bi bi-arrow-counterclockwise" aria-hidden="true"></i>
+                        </button>
+                      </span>
+                    )}
+                  </div>
+                )}
+
+                {tip && (
+                  <div className="tip-box cook-step__tip">
+                    <i className="bi bi-lightbulb" aria-hidden="true"></i>
+                    <p>{tip}</p>
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
-        </>
-      )}
 
-      {!finished && (
-        <div className="cook-mode__controls">
-          <button type="button" className="btn btn--secondary btn--lg" onClick={back} disabled={step === 0}>
-            <i className="bi bi-arrow-left" aria-hidden="true"></i>Back
-          </button>
-          <button type="button" className="btn btn--primary btn--lg cook-mode__next" onClick={next}>
-            {isLast ? 'Finish' : 'Next step'}
-            <i className={`bi ${isLast ? 'bi-check-lg' : 'bi-arrow-right'}`} aria-hidden="true"></i>
-          </button>
+            <div className="cook-mode__controls">
+              <button type="button" className="btn btn--secondary btn--lg cook-mode__back" onClick={back} disabled={step === 0}>
+                <i className="bi bi-arrow-left" aria-hidden="true"></i>Back
+              </button>
+              {!isLast && (
+                <p className="cook-mode__upnext">
+                  <span className="cook-kicker cook-kicker--muted">Up next · Step {step + 2}</span>
+                  <span className="cook-mode__upnext-text">{steps[step + 1]}</span>
+                </p>
+              )}
+              <button type="button" className="btn btn--primary btn--lg cook-mode__next" onClick={next}>
+                {isLast ? 'Finish' : 'Next step'}
+                <i className={`bi ${isLast ? 'bi-check-lg' : 'bi-arrow-right'}`} aria-hidden="true"></i>
+              </button>
+            </div>
+            {credits.length > 0 && (
+              <p className="cook-credits">
+                Photos via Wikimedia Commons:{' '}
+                {credits.map((credit, i) => (
+                  <React.Fragment key={credit.source}>
+                    {i > 0 && ', '}
+                    <a href={credit.source} target="_blank" rel="noopener noreferrer">{credit.author}</a>
+                    {credit.license && ` (${credit.license})`}
+                  </React.Fragment>
+                ))}
+              </p>
+            )}
+          </div>
         </div>
       )}
 
@@ -324,20 +418,7 @@ const CookMode: React.FC<CookModeProps> = ({
             <i className="bi bi-x-lg" aria-hidden="true"></i>
           </button>
         </div>
-        <ul className="cook-ingredients__list">
-          {ingredients.map((ing, index) => (
-            <li key={index} className={ing.swappedFrom ? 'is-swapped' : ''}>
-              <label>
-                <input type="checkbox" className="ingredient-check" checked={!!checked[index]} onChange={() => onToggleIngredient(index)} />
-                <span className="cook-ingredients__qty">{ing.quantity}</span>
-                <span className={checked[index] ? 'is-checked' : ''}>
-                  {ing.name}
-                  {ing.swappedFrom && <span className="cook-ingredients__instead"> instead of {ing.swappedFrom}</span>}
-                </span>
-              </label>
-            </li>
-          ))}
-        </ul>
+        {ingredientList('sheet')}
       </Drawer>
     </div>
   );

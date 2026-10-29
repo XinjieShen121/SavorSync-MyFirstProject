@@ -736,6 +736,8 @@ const RecipeDetailPage: React.FC = () => {
           onToggleIngredient={(index) => setChecked((prev) => ({ ...prev, [index]: !prev[index] }))}
           startStep={cookStep}
           onClose={() => setCookStep(null)}
+          heroImage={imageSrc || undefined}
+          heroCredit={recipe.image_credit}
         />
       )}
 
