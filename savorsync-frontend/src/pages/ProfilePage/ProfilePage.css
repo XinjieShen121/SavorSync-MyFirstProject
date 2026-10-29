@@ -64,7 +64,8 @@
   margin: 0 auto;
 }
 
-.auth-prompt h2 {
+.auth-prompt h1 {
+  font-size: var(--text-h2);
   color: var(--color-brand-700);
   margin-bottom: 1rem;
   font-family: var(--font-display);
@@ -402,3 +403,8 @@
     width: 200px;
   }
 } 
+/* Profile name is the page's h1 (design.md 5.4: --text-h2 size) */
+.profile-name {
+  font-size: var(--text-h2);
+  line-height: 1.25;
+}

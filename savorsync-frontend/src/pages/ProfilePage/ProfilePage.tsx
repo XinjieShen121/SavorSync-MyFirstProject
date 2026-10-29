@@ -128,7 +128,7 @@ const ProfilePage: React.FC = () => {
     return (
       <div className="user-profile">
         <div className="auth-prompt">
-          <h2>Please Log In</h2>
+          <h1>Please log in</h1>
           <p>You need to be logged in to view your profile.</p>
           <div className="auth-buttons">
             <button className="login-button" onClick={() => navigate('/login')}>
@@ -178,7 +178,7 @@ const ProfilePage: React.FC = () => {
             <span>Click to upload photo</span>
           </div>
         </div>
-        <h2>{user?.name || 'User'}</h2>
+        <h1 className="profile-name">{user?.name || 'User'}</h1>
         <p>Food Enthusiast</p>
       </div>
       

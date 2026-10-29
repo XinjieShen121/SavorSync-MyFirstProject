@@ -550,7 +550,7 @@ Used on the home page and any page that reads like a magazine feature. Component
 
   The cover is `aria-hidden`; the dish name is always in real text nearby. Large covers show a small "Photo coming soon" note.
 - **Photo credit.** When a recipe has `image_credit` (`{ author, license, license_url, source_url, source }`, filled by `npm run add-photos` from Wikimedia Commons), show "Photo: {author}, {license} via {source}" under the photo in `--text-xs`, `text-muted`, with the author linked to `source_url` and the license to `license_url`. Show it only when the photo itself is shown.
-- **Numbered lists** (collection shelves) use a `brand-500` display numeral only when the list is a real sequence or count; the cuisine index uses dotted leaders and counts instead of numbers.
+- **Numbered lists** (collection shelves) use a `brand-700` display numeral (`brand-500` is only 2.7:1) only when the list is a real sequence or count; the cuisine index uses dotted leaders and counts instead of numbers.
 
 ---
 
